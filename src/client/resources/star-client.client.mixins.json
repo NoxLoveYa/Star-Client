@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.starclient.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "GameMenuScreenMixin",
+    "GlowMixin",
+    "TitleScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}

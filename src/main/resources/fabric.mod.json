@@ -1,0 +1,44 @@
+{
+	"schemaVersion": 1,
+	"id": "star-client",
+	"version": "${version}",
+	"name": "Star-Client",
+	"description": "This is my shit cheat client stfu (Only reserved to femboys)!!!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/star-client/IMG_1730.jpg",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.starclient.StarClient"
+		],
+		"client": [
+			"com.starclient.StarClientClient"
+		],
+		"fabric-datagen": [
+			"com.starclient.StarClientDataGenerator"
+		]
+	},
+	"mixins": [
+		"star-client.mixins.json",
+		{
+			"config": "star-client.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.4",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
