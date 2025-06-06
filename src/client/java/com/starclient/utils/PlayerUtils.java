@@ -2,7 +2,6 @@ package com.starclient.utils;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.LoadedEntityModels;
 import net.minecraft.client.util.SkinTextures;
 import org.jetbrains.annotations.Nullable;

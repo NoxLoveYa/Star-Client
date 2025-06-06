@@ -7,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PlayerSkinWidget;
-import net.minecraft.client.toast.SystemToast;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 
@@ -32,23 +31,16 @@ public class CheatOptions extends Screen {
         );
 
         this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Glow"), (btn) -> {
-            com.starclient.CheatOptions.GlowEnabled = !com.starclient.CheatOptions.GlowEnabled;
-            // When the button is clicked, we can display a toast to the screen.
-            assert this.client != null;
-            if (com.starclient.CheatOptions.GlowEnabled) {
-                this.client.getToastManager().add(
-                        SystemToast.create(this.client, SystemToast.Type.NARRATOR_TOGGLE, Text.of("Glow Cheat"), Text.of("Enabled"))
-                );
-            } else {
-                this.client.getToastManager().add(
-                        SystemToast.create(this.client, SystemToast.Type.NARRATOR_TOGGLE, Text.of("Glow Cheat"), Text.of("Disabled"))
-                );
-            }
+            com.starclient.utils.CheatOptions.GlowEnabled = !com.starclient.utils.CheatOptions.GlowEnabled;
         }).dimensions(40, 40, 120, 20).build());
 
         this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Watermark"), (btn) -> {
-            com.starclient.CheatOptions.WatermarkEnabled = !com.starclient.CheatOptions.WatermarkEnabled;
+            com.starclient.utils.CheatOptions.WatermarkEnabled = !com.starclient.utils.CheatOptions.WatermarkEnabled;
         }).dimensions(this.width - 160, 40, 120, 20).build());
+
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Name ESP"), (btn) -> {
+            com.starclient.utils.CheatOptions.NameEnabled = !com.starclient.utils.CheatOptions.NameEnabled;
+        }).dimensions(40, 64, 120, 20).build());
 
         this.addDrawableChild(new PlayerSkinWidget(55, 85, PlayerUtils.getAllLoadedEntityModels(), PlayerUtils.getLocalPlayerSkinIdentifier())).setPosition(40, this.height / 2);
     }

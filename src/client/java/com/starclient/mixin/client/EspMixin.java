@@ -1,7 +1,6 @@
 package com.starclient.mixin.client;
 
-import com.starclient.CheatOptions;
-import com.starclient.StarClient;
+import com.starclient.utils.CheatOptions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.awt.*;
 
 @Mixin(Entity.class)
-public class GlowMixin {
+public class EspMixin {
     @Inject(method = "isGlowing", at = @At("HEAD"), cancellable = true)
-    private void IDK(CallbackInfoReturnable<Boolean> cir) {
+    private void forceGlow(CallbackInfoReturnable<Boolean> cir) {
         if (!CheatOptions.GlowEnabled) {
             return;
         }
@@ -23,11 +22,12 @@ public class GlowMixin {
 
         if (self instanceof HostileEntity || self instanceof PlayerEntity) {
             cir.setReturnValue(true);
+            cir.cancel();
         }
     }
 
     @Inject(method = "getTeamColorValue", at = @At("HEAD"), cancellable = true)
-    private void IDK2(CallbackInfoReturnable<Integer> cir) {
+    private void forceGlowColor(CallbackInfoReturnable<Integer> cir) {
         if (!CheatOptions.GlowEnabled) {
             return;
         }
@@ -35,8 +35,18 @@ public class GlowMixin {
 
         if (self instanceof HostileEntity) {
             cir.setReturnValue(Color.red.getRGB());
+            cir.cancel();
         } else if (self instanceof  PlayerEntity) {
             cir.setReturnValue(Color.pink.getRGB());
+            cir.cancel();
+        }
+    }
+
+    @Inject(method = "isCustomNameVisible", at = @At("HEAD"), cancellable = true)
+    private void forceNametag(CallbackInfoReturnable<Boolean> cir) {
+        if (CheatOptions.NameEnabled) {
+            cir.setReturnValue(true);
+            cir.cancel();
         }
     }
 }

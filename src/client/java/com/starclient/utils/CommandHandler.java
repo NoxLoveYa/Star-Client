@@ -1,4 +1,4 @@
-package com.starclient;
+package com.starclient.utils;
 
 public class CommandHandler {
     public CommandHandler() {
