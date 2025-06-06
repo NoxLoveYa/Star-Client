@@ -3,8 +3,9 @@
   "package": "com.starclient.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "GameMenuScreenMixin",
+    "EspForceMixin",
     "EspMixin",
+    "GameMenuScreenMixin",
     "TitleScreenMixin"
   ],
   "injectors": {
