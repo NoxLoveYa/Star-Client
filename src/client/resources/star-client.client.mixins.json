@@ -6,7 +6,9 @@
     "EspForceMixin",
     "EspMixin",
     "GameMenuScreenMixin",
-    "TitleScreenMixin"
+    "KeyboardMixin",
+    "TitleScreenMixin",
+    "WorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1

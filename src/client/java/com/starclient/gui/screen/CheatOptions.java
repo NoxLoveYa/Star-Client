@@ -1,5 +1,6 @@
 package com.starclient.gui.screen;
 
+import com.starclient.StarClient;
 import com.starclient.utils.PlayerUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -7,15 +8,21 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PlayerSkinWidget;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.ColorHelper;
+
+import java.util.function.Function;
 
 @Environment(EnvType.CLIENT) // Important: This screen only exists on the client
 public class CheatOptions extends Screen {
 
     public static Object Visual;
+    protected Screen parent;
     // The parent screen (TitleScreen in this case), to return to
-    private final Screen parent;
 
     public CheatOptions(Screen parent) {
         super(Text.literal("Star Client Options"));
@@ -42,17 +49,14 @@ public class CheatOptions extends Screen {
             com.starclient.utils.CheatOptions.NameEnabled = !com.starclient.utils.CheatOptions.NameEnabled;
         }).dimensions(40, 64, 120, 20).build());
 
-        this.addDrawableChild(new PlayerSkinWidget(55, 85, PlayerUtils.getAllLoadedEntityModels(), PlayerUtils.getLocalPlayerSkinIdentifier())).setPosition(40, this.height / 2);
+        //this.addDrawableChild(new PlayerSkinWidget(55, 85, PlayerUtils.getAllLoadedEntityModels(), PlayerUtils.getLocalPlayerSkinIdentifier())).setPosition(40, this.height / 2);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
-        // Draw your screen title in the center top
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 0xFFFFFF);
-
-        // You can draw more custom elements here
         context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Welcome to my custom mod screen!"), this.width / 2, this.height / 2 - 20, 0xFFAAAA);
     }
 }
