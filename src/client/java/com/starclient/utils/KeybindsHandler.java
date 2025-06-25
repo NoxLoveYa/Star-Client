@@ -1,7 +1,7 @@
 package com.starclient.utils;
 
-import com.starclient.classes.Actions;
-import com.starclient.classes.Keybinds;
+import com.starclient.classs.Actions;
+import com.starclient.classs.Keybinds;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
