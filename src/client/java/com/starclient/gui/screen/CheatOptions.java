@@ -1,21 +1,12 @@
 package com.starclient.gui.screen;
 
-import com.starclient.StarClient;
-import com.starclient.utils.PlayerUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.PlayerSkinWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
-
-import java.util.function.Function;
 
 @Environment(EnvType.CLIENT) // Important: This screen only exists on the client
 public class CheatOptions extends Screen {

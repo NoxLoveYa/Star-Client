@@ -1,5 +1,6 @@
 package com.starclient.mixin.client;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.starclient.utils.CheatOptions;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -29,12 +31,12 @@ public abstract class EspForceMixin {
 
     @Shadow public abstract TextRenderer getTextRenderer();
 
-    @Inject(method = "updateRenderState", at = @At("TAIL"))
-    private void forceBlToTrue(Entity entity, EntityRenderState state, float tickDelta, CallbackInfo ci) {
+    @Redirect(method = "updateRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderDispatcher;getSquaredDistanceToCamera(Lnet/minecraft/entity/Entity;)D"))
+    private double forceBlToTrue(EntityRenderDispatcher instance, Entity entity) {
         if (!CheatOptions.NameEnabled || !(entity instanceof PlayerEntity || entity instanceof HostileEntity)){
-            return;
+            return instance.camera.getPos().squaredDistanceTo(entity.getPos());
         }
-        state.displayName = entity.getDisplayName();
+        return 10.0;
     }
 
     @Inject(method = "getDisplayName", at = @At("HEAD"), cancellable = true)
