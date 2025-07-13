@@ -16,7 +16,7 @@ public abstract class PressableWidget extends ClickableWidget {
     protected static final int field_43050 = 2;
     protected float backgroundAlpha = 0.6F;
     protected ColorUtils backgroundColor = new ColorUtils(20, 20, 20);
-    protected boolean visible = true;
+    protected boolean dragging = false;
 
     public PressableWidget(int i, int j, int k, int l, Text text) {
         super(i, j, k, l, text);
@@ -39,6 +39,8 @@ public abstract class PressableWidget extends ClickableWidget {
 
     @Override
     public void onClick(double mouseX, double mouseY) {
+        if (!visible)
+            return;
         this.onPress();
     }
 

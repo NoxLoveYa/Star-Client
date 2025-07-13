@@ -1,7 +1,6 @@
 package com.starclient.gui.widgets;
 
 import com.google.common.collect.Lists;
-import com.starclient.StarClient;
 import com.starclient.utils.CheatOptions;
 import com.starclient.utils.ColorUtils;
 import net.fabricmc.api.EnvType;
@@ -12,11 +11,12 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
+
+import static org.lwjgl.glfw.GLFW.*;
 
 @Environment(EnvType.CLIENT)
 public class ButtonGroupWidget extends PressableWidget {
@@ -31,6 +31,8 @@ public class ButtonGroupWidget extends PressableWidget {
     protected List<ButtonWidget> buttons = Lists.<ButtonWidget>newArrayList();
     private int lastY = 0;
     private boolean opened = true;
+    private int lastMouseX = 0;
+    private int lastMouseY = 0;
 
     public static com.starclient.gui.widgets.ButtonGroupWidget.Builder builder(Text message) {
         return new com.starclient.gui.widgets.ButtonGroupWidget.Builder(message);
@@ -67,9 +69,29 @@ public class ButtonGroupWidget extends PressableWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        final int factorX = mouseX - lastMouseX;
+        final int factorY = mouseY - lastMouseY;
+        final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+
+        if (dragging) {
+            this.setX(this.getX() + factorX);
+            this.setY(this.getY() + factorY);
+
+            for (ButtonWidget button : buttons) {
+                button.setX(this.getX());
+                button.setY(button.getY() + factorY);
+            }
+        }
         super.renderWidget(context, mouseX, mouseY, delta);
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
         context.drawText(minecraftClient.textRenderer, this.opened? "[-]" : "[+]", getX() + 2, getY() + (int)(((float)this.height) / 3.5), ColorUtils.white.getRGB(), true);
+
+        if (!(glfwGetMouseButton(minecraftClient.getWindow().getHandle(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)) {
+            dragging = false;
+        } else if (isMouseOver(mouseX, mouseY) && (factorX != 0 || factorY != 0)) {
+            dragging = true;
+        }
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
     }
 
     public void appendButtonWidget(ButtonWidget button) {
