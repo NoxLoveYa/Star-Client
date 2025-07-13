@@ -1,7 +1,8 @@
 package com.starclient.mixin.client;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import com.starclient.interfaces.IEntityRenderState;
 import com.starclient.utils.CheatOptions;
+import com.starclient.utils.ColorUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -10,10 +11,10 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
@@ -23,7 +24,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.awt.*;
 
 @Mixin(EntityRenderer.class)
 public abstract class EspForceMixin {
@@ -39,14 +41,6 @@ public abstract class EspForceMixin {
         return 10.0;
     }
 
-    @Inject(method = "getDisplayName", at = @At("HEAD"), cancellable = true)
-    private void idk(Entity entity, CallbackInfoReturnable<Text> cir) {
-        if (entity instanceof PlayerEntity || entity instanceof HostileEntity) {
-            cir.setReturnValue(entity.getStyledDisplayName());
-            cir.cancel();
-        }
-    }
-
     @Inject(method = "renderLabelIfPresent", at = @At("HEAD"), cancellable = true)
     private void idk2(EntityRenderState state, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         Vec3d vec3d = state.nameLabelPos;
@@ -56,20 +50,28 @@ public abstract class EspForceMixin {
         }
 
         matrices.push();
-        matrices.translate(vec3d.x, vec3d.y + 0.5, vec3d.z);
+        matrices.translate(vec3d.x, vec3d.y + 0.35F, vec3d.z);
         matrices.multiply(this.dispatcher.getRotation());
         matrices.scale(0.025F, -0.025F, 0.025F);
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
         TextRenderer textRenderer = this.getTextRenderer();
-        float f = -textRenderer.getWidth(text) / 2.0F;
+        ColorUtils labelColor = new ColorUtils(0);
+        float x = -textRenderer.getWidth(text) / 2.0F;
         int j = (int)(MinecraftClient.getInstance().options.getTextBackgroundOpacity(0.25F) * 255.0F) << 24;
         textRenderer.draw(
-                text, f, (float)0, Colors.WHITE, false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
-        ); 
+                text, x, 0, labelColor.getRainbowTextColor(50), false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
+        );
+
+        try {
+            Entity currentEntity = ((IEntityRenderState) state).starclient$getEntity();
+            LivingEntity currentLivingEntity = (LivingEntity) currentEntity;
+            textRenderer.draw(
+                    String.format("%.2f", currentLivingEntity.getHealth()), -x + 1.0F, 0, labelColor.getLerpedColor(Color.red, Color.green, currentLivingEntity.getHealth() / currentLivingEntity.getMaxHealth()), false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
+            );
+        } catch (Exception e) { }
 
         matrices.pop();
-
         ci.cancel();
     }
-
 }
