@@ -1,5 +1,6 @@
 package com.starclient.gui.screen;
 
+import com.starclient.gui.widgets.ButtonGroupWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
@@ -28,18 +29,41 @@ public class CheatOptions extends Screen {
                         .build()
         );
 
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Glow"), (btn) -> {
-            com.starclient.utils.CheatOptions.GlowEnabled = !com.starclient.utils.CheatOptions.GlowEnabled;
-        }).dimensions(40, 40, 120, 20).build());
+        {
+            //Visuals group
+            ButtonGroupWidget visualsGroup = ButtonGroupWidget.builder(Text.of("Visuals")).dimensions(40, 40, 90, 15).build();
 
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Watermark"), (btn) -> {
-            com.starclient.utils.CheatOptions.WatermarkEnabled = !com.starclient.utils.CheatOptions.WatermarkEnabled;
-        }).dimensions(this.width - 160, 40, 120, 20).build());
+            //Visuals Buttons
+            ButtonWidget glowButton = ButtonWidget.builder(Text.of("Glow ESP"), (btn) -> {
+                com.starclient.utils.CheatOptions.GlowEnabled = !com.starclient.utils.CheatOptions.GlowEnabled;
+            }).size(120, 15).build();
 
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Toggle Name ESP"), (btn) -> {
-            com.starclient.utils.CheatOptions.NameEnabled = !com.starclient.utils.CheatOptions.NameEnabled;
-        }).dimensions(40, 64, 120, 20).build());
+            ButtonWidget nameEspButton = ButtonWidget.builder(Text.of("Name ESP"), (btn) -> {
+                com.starclient.utils.CheatOptions.NameEnabled = !com.starclient.utils.CheatOptions.NameEnabled;
+            }).size(120, 15).build();
 
+            visualsGroup.appendButtonWidget(glowButton);
+            visualsGroup.appendButtonWidget(nameEspButton);
+
+            this.addDrawableChild(visualsGroup);
+            this.addDrawableChild(glowButton);
+            this.addDrawableChild(nameEspButton);
+        }
+
+        {
+            //Misc group
+            ButtonGroupWidget miscGroup = ButtonGroupWidget.builder(Text.of("Misc")).dimensions(170, 40, 90, 15).build();
+
+            //Misc Buttons
+            ButtonWidget watermarkButton = ButtonWidget.builder(Text.of("Watermark"), (btn) -> {
+                com.starclient.utils.CheatOptions.WatermarkEnabled = !com.starclient.utils.CheatOptions.WatermarkEnabled;
+            }).size(120, 15).build();
+
+            miscGroup.appendButtonWidget(watermarkButton);
+
+            this.addDrawableChild(miscGroup);
+            this.addDrawableChild(watermarkButton);
+        }
         //this.addDrawableChild(new PlayerSkinWidget(55, 85, PlayerUtils.getAllLoadedEntityModels(), PlayerUtils.getLocalPlayerSkinIdentifier())).setPosition(40, this.height / 2);
     }
 
@@ -48,6 +72,5 @@ public class CheatOptions extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Welcome to my custom mod screen!"), this.width / 2, this.height / 2 - 20, 0xFFAAAA);
     }
 }

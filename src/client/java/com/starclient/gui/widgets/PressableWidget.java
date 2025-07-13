@@ -16,6 +16,7 @@ public abstract class PressableWidget extends ClickableWidget {
     protected static final int field_43050 = 2;
     protected float backgroundAlpha = 0.6F;
     protected ColorUtils backgroundColor = new ColorUtils(20, 20, 20);
+    protected boolean visible = true;
 
     public PressableWidget(int i, int j, int k, int l, Text text) {
         super(i, j, k, l, text);
@@ -25,6 +26,8 @@ public abstract class PressableWidget extends ClickableWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        if (!visible)
+            return;
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), new ColorUtils(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue(), MathHelper.ceil(this.alpha * this.backgroundAlpha * 255.0F)).getRGB());
         this.drawMessage(context, minecraftClient.textRenderer, new ColorUtils(255, 255, 255, MathHelper.ceil(this.alpha * 255.0F)).getRGB());
