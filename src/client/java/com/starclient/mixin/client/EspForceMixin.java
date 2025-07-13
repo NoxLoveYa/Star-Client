@@ -15,6 +15,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
@@ -58,7 +59,7 @@ public abstract class EspForceMixin {
         TextRenderer textRenderer = this.getTextRenderer();
         ColorUtils labelColor = new ColorUtils(0);
         float x = -textRenderer.getWidth(text) / 2.0F;
-        int j = (int)(MinecraftClient.getInstance().options.getTextBackgroundOpacity(0.25F) * 255.0F) << 24;
+        int j = new ColorUtils(20, 20, 20, MathHelper.ceil(0.6F * 255.0F)).getRGB();
         textRenderer.draw(
                 text, x, 0, labelColor.getRainbowTextColor(50), false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
         );
@@ -67,7 +68,7 @@ public abstract class EspForceMixin {
             Entity currentEntity = ((IEntityRenderState) state).starclient$getEntity();
             LivingEntity currentLivingEntity = (LivingEntity) currentEntity;
             textRenderer.draw(
-                    String.format("%.2f", currentLivingEntity.getHealth()), -x + 1.0F, 0, labelColor.getLerpedColor(Color.red, Color.green, currentLivingEntity.getHealth() / currentLivingEntity.getMaxHealth()), false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
+                    String.format("%.0f", currentLivingEntity.getHealth()), -x + 1.75F, 0, labelColor.getLerpedColor(new Color(255, 38, 96), new Color( 194, 255, 38), currentLivingEntity.getHealth() / currentLivingEntity.getMaxHealth()), false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.SEE_THROUGH, j, light
             );
         } catch (Exception e) { }
 
