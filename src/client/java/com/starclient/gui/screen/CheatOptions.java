@@ -31,7 +31,22 @@ public class CheatOptions extends Screen {
 
         {
             //Visuals group
-            ButtonGroupWidget visualsGroup = ButtonGroupWidget.builder(Text.of("Visuals")).dimensions(40, 40, 90, 15).build();
+            ButtonGroupWidget combatGroup = ButtonGroupWidget.builder(Text.of("Combat")).dimensions(40, 40, 90, 15).build();
+
+            //Visuals Buttons
+            ButtonWidget autoClickerButton = ButtonWidget.builder(Text.of("AutoClicker"), (btn) -> {
+                com.starclient.utils.CheatOptions.GlowEnabled = !com.starclient.utils.CheatOptions.GlowEnabled;
+            }).size(120, 15).build();
+
+            combatGroup.appendButtonWidget(autoClickerButton);
+
+            this.addDrawableChild(combatGroup);
+            this.addDrawableChild(autoClickerButton);
+        }
+
+        {
+            //Visuals group
+            ButtonGroupWidget visualsGroup = ButtonGroupWidget.builder(Text.of("Visuals")).dimensions(165, 40, 90, 15).build();
 
             //Visuals Buttons
             ButtonWidget glowButton = ButtonWidget.builder(Text.of("Glow ESP"), (btn) -> {
@@ -52,7 +67,7 @@ public class CheatOptions extends Screen {
 
         {
             //Misc group
-            ButtonGroupWidget miscGroup = ButtonGroupWidget.builder(Text.of("Misc")).dimensions(170, 40, 90, 15).build();
+            ButtonGroupWidget miscGroup = ButtonGroupWidget.builder(Text.of("Misc")).dimensions(290, 40, 90, 15).build();
 
             //Misc Buttons
             ButtonWidget watermarkButton = ButtonWidget.builder(Text.of("Watermark"), (btn) -> {

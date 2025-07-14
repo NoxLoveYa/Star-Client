@@ -1,5 +1,6 @@
 package com.starclient.gui.widgets;
 
+import com.starclient.utils.CheatOptions;
 import com.starclient.utils.ColorUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -16,7 +17,10 @@ public abstract class PressableWidget extends ClickableWidget {
     protected static final int field_43050 = 2;
     protected float backgroundAlpha = 0.6F;
     protected ColorUtils backgroundColor = new ColorUtils(20, 20, 20);
+    protected ColorUtils enabledBackgroundColor = new ColorUtils(20, 20, 20);
+    protected ColorUtils enabledTextColor = CheatOptions.MainColor;
     protected boolean dragging = false;
+    protected boolean enabled = false;
 
     public PressableWidget(int i, int j, int k, int l, Text text) {
         super(i, j, k, l, text);
@@ -29,8 +33,9 @@ public abstract class PressableWidget extends ClickableWidget {
         if (!visible)
             return;
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), new ColorUtils(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue(), MathHelper.ceil(this.alpha * this.backgroundAlpha * 255.0F)).getRGB());
-        this.drawMessage(context, minecraftClient.textRenderer, new ColorUtils(255, 255, 255, MathHelper.ceil(this.alpha * 255.0F)).getRGB());
+        ColorUtils currentBackgroundColor = this.enabled ? enabledBackgroundColor : backgroundColor;
+        context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), new ColorUtils(currentBackgroundColor.getRed(), currentBackgroundColor.getGreen(), currentBackgroundColor.getBlue(), MathHelper.ceil(this.alpha * this.backgroundAlpha * 255.0F)).getRGB());
+        this.drawMessage(context, minecraftClient.textRenderer, this.enabled ? new ColorUtils(enabledTextColor.getRed(), enabledTextColor.getGreen(), enabledTextColor.getBlue(), MathHelper.ceil(this.alpha * 255.0F)).getRGB() : new ColorUtils(255, 255, 255, MathHelper.ceil(this.alpha * 255.0F)).getRGB());
     }
 
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
@@ -42,6 +47,7 @@ public abstract class PressableWidget extends ClickableWidget {
         if (!visible)
             return;
         this.onPress();
+        this.enabled = !this.enabled;
     }
 
     @Override

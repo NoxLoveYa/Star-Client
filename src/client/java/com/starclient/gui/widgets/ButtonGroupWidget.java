@@ -48,6 +48,8 @@ public class ButtonGroupWidget extends PressableWidget {
         };
         this.narrationSupplier = narrationSupplier;
         this.backgroundColor = CheatOptions.MainColor;
+        this.enabledBackgroundColor = CheatOptions.MainColor;
+        this.enabledTextColor = new ColorUtils(255, 255, 255);
         this.backgroundAlpha = 0.45F;
         this.lastY = y + height;
     }
