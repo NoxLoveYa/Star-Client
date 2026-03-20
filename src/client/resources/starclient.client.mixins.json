@@ -3,15 +3,12 @@
   "package": "com.starclient.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "BlockXray",
-    "EntityRenderStateDispatcherMixin",
+    "EntityCustomTag",
+    "EntityExtractRenderState",
     "EntityRenderStateMixin",
-    "EspForceMixin",
-    "EspMixin",
-    "GameMenuScreenMixin",
-    "KeyboardMixin",
-    "TitleScreenMixin",
-    "WorldMixin"
+    "EntityTagForce",
+    "EntityTagForce$EntityRendererAccessor",
+    "NametagFeatureChange$NameTagStorageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

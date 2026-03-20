@@ -1,21 +1,38 @@
 package com.starclient.mixin.client;
 
-import com.starclient.interfaces.IEntityRenderState;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.entity.Entity;
+import com.starclient.EntityRenderStateDuck;
+import com.starclient.StarClientOptions;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+// 2. Mixin on EntityRenderState to store it
 @Mixin(EntityRenderState.class)
-public abstract class EntityRenderStateMixin implements IEntityRenderState {
+public class EntityRenderStateMixin implements EntityRenderStateDuck {
     @Unique
-    private Entity starclient$entity;
+    private Entity star$entity;
 
-    public Entity starclient$getEntity() {
-        return starclient$entity;
+    @Unique
+    private boolean star$nameTag = false;
+
+    @Override
+    public void star$setEntity(Entity entity) { this.star$entity = entity; }
+
+    @Override
+    public Entity star$getEntity() { return this.star$entity; }
+
+    @Override
+    public void star$setNametag(Entity entity) {
+        boolean isHostile = entity instanceof net.minecraft.world.entity.monster.Enemy;
+        boolean isPlayer = entity.getType() == EntityType.PLAYER;
+        boolean isItem = entity.getType() == EntityType.ITEM;
+        boolean isNonHostile = !isItem && !isHostile;
+
+        star$nameTag = (isHostile && StarClientOptions.forceTagHostile) || (isPlayer && StarClientOptions.forcedTagPlayer) || (isItem && StarClientOptions.forceTagItem) || (isNonHostile && StarClientOptions.forceTagMob);
     }
 
-    public void starclient$setEntity(Entity entity) {
-        this.starclient$entity = entity;
-    }
+    @Override
+    public boolean star$isNametag() { return this.star$nameTag; }
 }
