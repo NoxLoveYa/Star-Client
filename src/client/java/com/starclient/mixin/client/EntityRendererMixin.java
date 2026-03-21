@@ -530,22 +530,34 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             return original;
 
         String healthStr = String.format("%.1f❤ ", living.getHealth());
-        ChatFormatting healthColor = getHealthColor(living);
+        int healthColor = getHealthColorRgb(living);
 
         return Component.empty()
                 .append(Component.literal(Objects.requireNonNull(healthStr))
-                        .withStyle(Objects.requireNonNull(healthColor)))
+                        .withStyle(style -> style.withColor(healthColor)))
                 .append(Objects.requireNonNull(original));
     }
 
     @Unique
-    private ChatFormatting getHealthColor(LivingEntity living) {
-        float ratio = living.getHealth() / living.getMaxHealth();
-        if (ratio > 0.5f)
-            return ChatFormatting.GREEN;
-        if (ratio > 0.25f)
-            return ChatFormatting.YELLOW;
-        return ChatFormatting.RED;
+    private int getHealthColorRgb(LivingEntity living) {
+        float maxHealth = living.getMaxHealth();
+        if (maxHealth <= 0f) {
+            return 0xFFDC3C3C;
+        }
+
+        float ratio = Math.max(0f, Math.min(1f, living.getHealth() / maxHealth));
+
+        int startR = 220;
+        int startG = 60;
+        int startB = 60;
+        int endR = 40;
+        int endG = 200;
+        int endB = 70;
+
+        int r = Math.round(startR + ((endR - startR) * ratio));
+        int g = Math.round(startG + ((endG - startG) * ratio));
+        int b = Math.round(startB + ((endB - startB) * ratio));
+        return (r << 16) | (g << 8) | b;
     }
 
     @Unique

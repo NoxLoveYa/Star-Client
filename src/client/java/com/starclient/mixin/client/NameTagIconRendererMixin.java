@@ -29,6 +29,10 @@ import java.util.Set;
 public class NameTagIconRendererMixin {
     @Unique
     private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
+    @Unique
+    private static final int STAR$LOW_HEALTH_BAR_COLOR = new Color(220, 60, 60, 220).getRGB();
+    @Unique
+    private static final int STAR$HIGH_HEALTH_BAR_COLOR = new Color(40, 200, 70, 220).getRGB();
 
     @Inject(method = "render", at = @At("HEAD"))
     private void renderIcons(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource,
@@ -158,9 +162,7 @@ public class NameTagIconRendererMixin {
         }
         float fillRight = Math.min(fillLeft + fillWidth, barRight - fillPad);
 
-        int fillColor = clampedRatio > 0.5f
-                ? new Color(40, 200, 70, 220).getRGB()
-                : (clampedRatio > 0.25f ? new Color(230, 200, 40, 220).getRGB() : new Color(220, 60, 60, 220).getRGB());
+        int fillColor = star$lerpColor(STAR$LOW_HEALTH_BAR_COLOR, STAR$HIGH_HEALTH_BAR_COLOR, clampedRatio);
 
         if (fillRight > fillLeft) {
             barConsumer.addVertex(pose, fillLeft, fillTop, fillZ).setColor(fillColor).setLight(STAR$FULL_BRIGHT_LIGHT);
@@ -173,5 +175,27 @@ public class NameTagIconRendererMixin {
 
         bufferSource.endBatch(barRenderType);
 
+    }
+
+    @Unique
+    private int star$lerpColor(int startColor, int endColor, float t) {
+        float clamped = Math.max(0f, Math.min(1f, t));
+
+        int sa = (startColor >>> 24) & 0xFF;
+        int sr = (startColor >>> 16) & 0xFF;
+        int sg = (startColor >>> 8) & 0xFF;
+        int sb = startColor & 0xFF;
+
+        int ea = (endColor >>> 24) & 0xFF;
+        int er = (endColor >>> 16) & 0xFF;
+        int eg = (endColor >>> 8) & 0xFF;
+        int eb = endColor & 0xFF;
+
+        int a = Math.round(sa + ((ea - sa) * clamped));
+        int r = Math.round(sr + ((er - sr) * clamped));
+        int g = Math.round(sg + ((eg - sg) * clamped));
+        int b = Math.round(sb + ((eb - sb) * clamped));
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }
