@@ -19,7 +19,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 @Mixin(NameTagFeatureRenderer.class)
@@ -33,14 +34,14 @@ public class NameTagHeadIconRendererMixin {
         NameTagFeatureRenderer.Storage storage = submitNodeCollection.getNameTagSubmits();
 
         NameTagStorageAccessor accessor = (NameTagStorageAccessor) storage;
-        Set<String> renderedKeys = new HashSet<>();
+        Set<SubmitNodeStorage.NameTagSubmit> renderedSubmits = Collections.newSetFromMap(new IdentityHashMap<>());
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsSeethrough()) {
-            if (renderedKeys.add(buildSubmitKey(submit))) {
+            if (renderedSubmits.add(submit)) {
                 renderHead(submit, bufferSource, font, true);
             }
         }
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsNormal()) {
-            if (renderedKeys.add(buildSubmitKey(submit))) {
+            if (renderedSubmits.add(submit)) {
                 renderHead(submit, bufferSource, font, false);
             }
         }
@@ -69,14 +70,6 @@ public class NameTagHeadIconRendererMixin {
                     STAR$FULL_BRIGHT_LIGHT);
         }
         bufferSource.endBatch();
-    }
-
-    @Unique
-    private String buildSubmitKey(SubmitNodeStorage.NameTagSubmit submit) {
-        return submit.text().getString()
-                + "|" + System.identityHashCode(submit.pose())
-                + "|" + Float.floatToIntBits(submit.x())
-                + "|" + Float.floatToIntBits(submit.y());
     }
 
     @Unique
