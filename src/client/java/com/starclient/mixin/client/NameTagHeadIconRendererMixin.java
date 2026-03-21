@@ -74,6 +74,7 @@ public class NameTagHeadIconRendererMixin {
     @Unique
     private String buildSubmitKey(SubmitNodeStorage.NameTagSubmit submit) {
         return submit.text().getString()
+                + "|" + System.identityHashCode(submit.pose())
                 + "|" + Float.floatToIntBits(submit.x())
                 + "|" + Float.floatToIntBits(submit.y());
     }
