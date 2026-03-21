@@ -6,7 +6,7 @@ public class StarClientOptions {
     public static boolean forceTagMob = true;
     public static boolean forceTagHostile = true;
     public static boolean forcedTagPlayer = true;
-    public static boolean forceTagItem = false;
+    public static boolean forceTagItem = true;
 
     public static double forceTagDistance = 18 * 64;
 

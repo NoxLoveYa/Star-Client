@@ -7,14 +7,19 @@ import com.starclient.StarNameTagColorRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -44,6 +49,13 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
         Identifier texture = resolveTexture(entity, duck);
         StarNameTagColorRegistry.UvRect uvRect = resolveUv(entity, texture);
+        if (entity instanceof ItemEntity itemEntity) {
+            ItemIcon itemIcon = resolveItemIcon(itemEntity);
+            if (itemIcon != null) {
+                texture = itemIcon.texture();
+                uvRect = itemIcon.uvRect();
+            }
+        }
         float healthRatio = livingEntity != null && livingEntity.getMaxHealth() > 0f
                 ? (livingEntity.getHealth() / livingEntity.getMaxHealth())
                 : -1f;
@@ -312,6 +324,26 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
     }
 
     @Unique
+    private ItemIcon resolveItemIcon(ItemEntity itemEntity) {
+        if (itemEntity.getItem().isEmpty()) {
+            return null;
+        }
+
+        ItemStackRenderState itemRenderState = new ItemStackRenderState();
+        Minecraft.getInstance()
+                .getItemModelResolver()
+                .updateForNonLiving(itemRenderState, itemEntity.getItem(), ItemDisplayContext.GROUND, itemEntity);
+        TextureAtlasSprite sprite = itemRenderState.pickParticleIcon(itemEntity.getRandom());
+        if (sprite == null) {
+            return null;
+        }
+
+        return new ItemIcon(
+                sprite.atlasLocation(),
+                new StarNameTagColorRegistry.UvRect(sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1()));
+    }
+
+    @Unique
     private StarNameTagColorRegistry.UvRect resolveUv(Entity entity, Identifier texture) {
         if (entity instanceof AbstractClientPlayer || entity instanceof Avatar) {
             return StarNameTagColorRegistry.UvRect.playerFace();
@@ -502,5 +534,9 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         if (ratio > 0.25f)
             return ChatFormatting.YELLOW;
         return ChatFormatting.RED;
+    }
+
+    @Unique
+    private record ItemIcon(Identifier texture, StarNameTagColorRegistry.UvRect uvRect) {
     }
 }
