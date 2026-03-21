@@ -5,23 +5,33 @@ import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.HashMap;
 
 public class StarNameTagColorRegistry {
-    private static final Map<Component, Integer> BG_COLORS = new WeakHashMap<>();
-    private static final Map<Component, Identifier> HEAD_TEXTURES = new WeakHashMap<>();
+    public static final Map<String, Integer> BG_COLORS = new HashMap<>();
+    private static final Map<String, Identifier> HEAD_TEXTURES = new HashMap<>();
+
+    private static String key(Component nameTag) {
+        return nameTag.getString();
+    }
 
     public static void register(Component nameTag, int bgColor, @Nullable Identifier headTexture) {
-        BG_COLORS.put(nameTag, bgColor);
-        if (headTexture != null) HEAD_TEXTURES.put(nameTag, headTexture);
+        String key = key(nameTag);
+        BG_COLORS.put(key, bgColor);
+        if (headTexture != null) HEAD_TEXTURES.put(key, headTexture);
     }
 
     public static int get(Component nameTag) {
-        return BG_COLORS.getOrDefault(nameTag, -1);
+        return BG_COLORS.getOrDefault(key(nameTag), -1);
     }
 
     @Nullable
     public static Identifier getHeadTexture(Component nameTag) {
-        return HEAD_TEXTURES.get(nameTag);
+        return HEAD_TEXTURES.get(key(nameTag));
+    }
+
+    public static void clearAll() {
+        BG_COLORS.clear();
+        HEAD_TEXTURES.clear();
     }
 }

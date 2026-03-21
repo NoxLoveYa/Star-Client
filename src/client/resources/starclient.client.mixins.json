@@ -1,5 +1,6 @@
 {
   "required": true,
+  "refmap": "client-starclient.client.mixins.refmap.json",
   "package": "com.starclient.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [

@@ -33,6 +33,7 @@ public class NameTagHeadIconRendererMixin {
         }
 
         bufferSource.endBatch(); // flush before text renders
+        StarNameTagColorRegistry.clearAll();
     }
 
     @Unique
@@ -44,23 +45,25 @@ public class NameTagHeadIconRendererMixin {
         int headSize = size - 1;
         float x = submit.x() - headSize - 3;
         float y = submit.y(); // adjust this
+        float bgZ = -0.01f;
 
-        // background
         int bgColor = StarNameTagColorRegistry.get(submit.text());
         if (bgColor != -1) {
-            VertexConsumer bgConsumer = bufferSource.getBuffer(seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground());
-            Matrix4f pose = submit.pose();
-            bgConsumer.addVertex(pose, x - 1,        y - 1,        0f).setColor(bgColor).setLight(submit.lightCoords());
-            bgConsumer.addVertex(pose, x - 1,        y + headSize + 1, 0f).setColor(bgColor).setLight(submit.lightCoords());
-            bgConsumer.addVertex(pose, x + headSize + 1, y + headSize + 1, 0f).setColor(bgColor).setLight(submit.lightCoords());
-            bgConsumer.addVertex(pose, x + headSize + 1, y - 1,        0f).setColor(bgColor).setLight(submit.lightCoords());
+            RenderType bgRenderType = seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground();
+            VertexConsumer bgConsumer = bufferSource.getBuffer(bgRenderType);
+            Matrix4f bgPose = submit.pose();
+            bgConsumer.addVertex(bgPose, x - 1,            y - 1,            bgZ).setColor(bgColor).setLight(submit.lightCoords());
+            bgConsumer.addVertex(bgPose, x - 1,            y + headSize + 1, bgZ).setColor(bgColor).setLight(submit.lightCoords());
+            bgConsumer.addVertex(bgPose, x + headSize + 1, y + headSize + 1, bgZ).setColor(bgColor).setLight(submit.lightCoords());
+            bgConsumer.addVertex(bgPose, x + headSize + 1, y - 1,            bgZ).setColor(bgColor).setLight(submit.lightCoords());
+            bufferSource.endBatch(bgRenderType);
         }
 
         // player skin face UV: pixels 8-16 on a 64x64 texture
         float u0 = 8f / 64f, u1 = 16f / 64f;
         float v0 = 8f / 64f, v1 = 16f / 64f;
 
-        RenderType renderType = RenderTypes.blockScreenEffect(texture);
+        RenderType renderType = seeThrough ? RenderTypes.entityCutoutNoCull(texture) : RenderTypes.textSeeThrough(texture);
 
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
         Matrix4f pose = submit.pose();

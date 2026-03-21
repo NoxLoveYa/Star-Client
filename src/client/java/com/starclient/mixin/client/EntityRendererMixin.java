@@ -9,8 +9,10 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,13 +25,18 @@ import java.awt.*;
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
     private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
-        if (entityRenderState.nameTag == null || !(((EntityRenderStateDuck) entityRenderState).star$isNametag())) return;
+        if (entityRenderState.nameTag == null) return;
 
-        Entity entity = ((EntityRenderStateDuck) entityRenderState).star$getEntity();
+        EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
+
+        if (!duck.star$isNametag()) return;
+
+        Entity entity = duck.star$getEntity();
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
+        Identifier texture = resolveTexture(entity, duck);
 
         Component nameTag = buildNameTag(livingEntity, entityRenderState.nameTag);
-        StarNameTagColorRegistry.register(nameTag, buildBackgroundColor(livingEntity), ((EntityRenderStateDuck) entityRenderState).star$getTexture());
+        StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture);
 
         submitNodeCollector.submitNameTag(
                 poseStack,
@@ -42,6 +49,14 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
                 cameraRenderState
         );
         ci.cancel();
+    }
+
+    @Unique
+    private Identifier resolveTexture(Entity entity, EntityRenderStateDuck duck) {
+        if (entity instanceof AbstractClientPlayer player) {
+            return player.getSkin().body().texturePath();
+        }
+        return duck.star$getTexture();
     }
 
     @Unique
@@ -62,11 +77,5 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         if (ratio > 0.5f) return ChatFormatting.GREEN;
         if (ratio > 0.25f) return ChatFormatting.YELLOW;
         return ChatFormatting.RED;
-    }
-
-    @Unique
-    private int buildBackgroundColor(LivingEntity living) {
-        if (living == null) return 0x20000000;
-        return Color.BLACK.getRGB();
     }
 }
