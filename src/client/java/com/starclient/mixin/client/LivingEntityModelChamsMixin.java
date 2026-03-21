@@ -1,9 +1,13 @@
 package com.starclient.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.starclient.EntityRenderStateDuck;
 import com.starclient.StarClientOptions;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -11,9 +15,10 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -27,11 +32,30 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.awt.Color;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>>
         extends EntityRenderer<T, S> {
     private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
+    private static final RenderPipeline STAR$ENTITY_TRANSLUCENT_NO_DEPTH_PIPELINE = Objects.requireNonNull(
+            RenderPipelines.register(
+                    RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                            .withLocation(
+                                    Identifier.fromNamespaceAndPath("starclient", "pipeline/entity_chams_no_depth"))
+                            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                            .withDepthWrite(false)
+                            .withBlend(BlendFunction.TRANSLUCENT)
+                            .build()));
+    private static final Function<Identifier, RenderType> STAR$ENTITY_CHAMS_NO_DEPTH = Util.memoize(
+            texture -> RenderType.create(
+                    "starclient_entity_chams_no_depth",
+                    RenderSetup.builder(Objects.requireNonNull(STAR$ENTITY_TRANSLUCENT_NO_DEPTH_PIPELINE))
+                            .useLightmap()
+                            .useOverlay()
+                            .withTexture("Sampler0", Objects.requireNonNull(texture))
+                            .sortOnUpload()
+                            .createRenderSetup()));
 
     protected LivingEntityModelChamsMixin(EntityRendererProvider.Context context) {
         super(context);
@@ -85,15 +109,12 @@ public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S exte
         if (entity != null
                 && entity.isAlive()
                 && shouldRenderChamsForEntity(entity, entityRenderState.distanceToCameraSq)) {
-            float alpha = Math.max(0.05f, Math.min(1.0f, StarClientOptions.mobChamsAlpha));
+            float alpha = alphaForEntity(entity);
             int tint = colorTintForEntity(entity, alpha);
             @SuppressWarnings("unchecked")
             S typedRenderState = (S) entityRenderState;
             Identifier texture = Objects.requireNonNull(this.getTextureLocation(typedRenderState));
-            RenderType chamsRenderType = this.getRenderType(typedRenderState, true, true, true);
-            if (chamsRenderType == null) {
-                chamsRenderType = RenderTypes.entityTranslucent(texture);
-            }
+            RenderType chamsRenderType = STAR$ENTITY_CHAMS_NO_DEPTH.apply(texture);
 
             star$submitModelTyped(
                     model,
@@ -105,7 +126,7 @@ public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S exte
                     overlay,
                     tint,
                     sprite,
-                    tint,
+                    0,
                     crumblingOverlay);
             return;
         }
@@ -192,6 +213,15 @@ public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S exte
         int rgb = Color.HSBtoRGB(Math.max(0.0f, Math.min(1.0f, hue)), 0.85f, 0.95f) & 0x00FFFFFF;
         int alphaByte = (int) Math.round(Math.max(0.0f, Math.min(1.0f, alpha)) * 255.0f);
         return (alphaByte << 24) | rgb;
+    }
+
+    private static float alphaForEntity(@NonNull Entity entity) {
+        boolean isPlayer = entity.getType() == EntityType.PLAYER || entity instanceof Avatar;
+        boolean isHostile = entity instanceof Enemy;
+        float alpha = isPlayer
+                ? StarClientOptions.chamsAlphaPlayer
+                : (isHostile ? StarClientOptions.chamsAlphaHostile : StarClientOptions.chamsAlphaMob);
+        return Math.max(0.05f, Math.min(1.0f, alpha));
     }
 
     private static float hueForEntity(@NonNull Entity entity) {

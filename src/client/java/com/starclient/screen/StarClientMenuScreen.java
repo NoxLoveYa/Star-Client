@@ -29,7 +29,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                 toggle("enabled", () -> StarClientOptions.chamsPlayer,
                         value -> StarClientOptions.chamsPlayer = value),
                 colorPicker("hue", () -> StarClientOptions.chamsHuePlayer,
-                        value -> StarClientOptions.chamsHuePlayer = (float) Math.max(0.0, Math.min(1.0, value)))));
+                        value -> StarClientOptions.chamsHuePlayer = (float) Math.max(0.0, Math.min(1.0, value))),
+                slider("opacity", 0.05, 1.0,
+                        () -> StarClientOptions.chamsAlphaPlayer,
+                        value -> StarClientOptions.chamsAlphaPlayer = (float) value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
         MenuSection playerDistance = new MenuSection("player distance", "player", 0, listOf(
                 slider("nametag distance", 16.0, 256.0,
@@ -49,7 +53,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                 toggle("enabled", () -> StarClientOptions.chamsHostile,
                         value -> StarClientOptions.chamsHostile = value),
                 colorPicker("hue", () -> StarClientOptions.chamsHueHostile,
-                        value -> StarClientOptions.chamsHueHostile = (float) Math.max(0.0, Math.min(1.0, value)))));
+                        value -> StarClientOptions.chamsHueHostile = (float) Math.max(0.0, Math.min(1.0, value))),
+                slider("opacity", 0.05, 1.0,
+                        () -> StarClientOptions.chamsAlphaHostile,
+                        value -> StarClientOptions.chamsAlphaHostile = (float) value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
         MenuSection hostileDistance = new MenuSection("hostile distance", "hostiles", 0, listOf(
                 slider("nametag distance", 16.0, 256.0,
@@ -69,7 +77,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                 toggle("enabled", () -> StarClientOptions.chamsMob,
                         value -> StarClientOptions.chamsMob = value),
                 colorPicker("hue", () -> StarClientOptions.chamsHueMob,
-                        value -> StarClientOptions.chamsHueMob = (float) Math.max(0.0, Math.min(1.0, value)))));
+                        value -> StarClientOptions.chamsHueMob = (float) Math.max(0.0, Math.min(1.0, value))),
+                slider("opacity", 0.05, 1.0,
+                        () -> StarClientOptions.chamsAlphaMob,
+                        value -> StarClientOptions.chamsAlphaMob = (float) value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
         MenuSection mobDistance = new MenuSection("mob distance", "mobs", 0, listOf(
                 slider("nametag distance", 16.0, 256.0,
@@ -87,12 +99,6 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         StarClientMenuScreen::setNameTagBackgroundAlpha,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f", value)))));
 
-        MenuSection sharedChams = new MenuSection("shared chams", "shared", 1, listOf(
-                slider("chams alpha", 0.05, 1.0,
-                        () -> StarClientOptions.mobChamsAlpha,
-                        value -> StarClientOptions.mobChamsAlpha = (float) value,
-                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
-
         MenuSection itemNametag = new MenuSection("item nametag", "items", 0, listOf(
                 toggle("items", () -> StarClientOptions.forceTagItem,
                         value -> StarClientOptions.forceTagItem = value)));
@@ -101,7 +107,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                 toggle("enabled", () -> StarClientOptions.chamsItem,
                         value -> StarClientOptions.chamsItem = value),
                 colorPicker("hue", () -> StarClientOptions.chamsHueItem,
-                        value -> StarClientOptions.chamsHueItem = (float) Math.max(0.0, Math.min(1.0, value)))));
+                        value -> StarClientOptions.chamsHueItem = (float) Math.max(0.0, Math.min(1.0, value))),
+                slider("opacity", 0.05, 1.0,
+                        () -> StarClientOptions.chamsAlphaItem,
+                        value -> StarClientOptions.chamsAlphaItem = (float) value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
         MenuSection itemDistance = new MenuSection("item distance", "items", 0, listOf(
                 slider("nametag distance", 16.0, 256.0,
@@ -190,7 +200,10 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                     StarClientOptions.chamsHueHostile = 0.00f;
                     StarClientOptions.chamsHueMob = 0.32f;
                     StarClientOptions.chamsHueItem = 0.14f;
-                    StarClientOptions.mobChamsAlpha = 0.35f;
+                    StarClientOptions.chamsAlphaPlayer = 0.35f;
+                    StarClientOptions.chamsAlphaHostile = 0.35f;
+                    StarClientOptions.chamsAlphaMob = 0.35f;
+                    StarClientOptions.chamsAlphaItem = 0.35f;
                 })));
 
         MenuTab visuals = new MenuTab("visuals",
@@ -208,7 +221,6 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         itemChams,
                         itemDistance,
                         sharedNameTag,
-                        sharedChams,
                         stars,
                         colorRange));
         MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));

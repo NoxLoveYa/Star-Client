@@ -108,7 +108,7 @@ public final class MobChamsRenderer {
             return;
         }
 
-        float alpha = Math.max(0.05f, Math.min(1.0f, StarClientOptions.mobChamsAlpha));
+        float alpha = Math.max(0.05f, Math.min(1.0f, StarClientOptions.chamsAlphaItem));
         var level = Objects.requireNonNull(client.level);
         for (Entity rawEntity : level.entitiesForRendering()) {
             if (rawEntity == null) {
