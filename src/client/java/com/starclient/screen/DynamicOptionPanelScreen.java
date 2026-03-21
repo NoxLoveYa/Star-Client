@@ -905,7 +905,6 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final class HueSlider extends AbstractSliderButton {
         private static final int TRACK_LEFT_PADDING = 6;
         private static final int TRACK_RIGHT_PADDING = 22;
-        private static final double EDGE_EASE = 0.04;
         private final DoubleConsumer setter;
         private final DoubleSupplier getter;
 
@@ -940,24 +939,14 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         @Override
         protected void onDrag(@NonNull MouseButtonEvent mouseButtonEvent, double dragX, double dragY) {
             this.setValueFromTrack(mouseButtonEvent.x());
-            super.onDrag(mouseButtonEvent, dragX, dragY);
         }
 
         private void setValueFromTrack(double mouseX) {
             int trackStart = this.getX() + TRACK_LEFT_PADDING;
             int trackEnd = this.getX() + this.getWidth() - TRACK_RIGHT_PADDING;
-            int trackWidth = Math.max(1, trackEnd - trackStart);
-            double normalized = (mouseX - trackStart) / trackWidth;
-            double clamped = clamp(normalized);
-
-            if (clamped <= EDGE_EASE) {
-                clamped = (clamped / EDGE_EASE) * (EDGE_EASE * 0.5);
-            } else if (clamped >= 1.0 - EDGE_EASE) {
-                double topRange = 1.0 - clamped;
-                clamped = 1.0 - ((topRange / EDGE_EASE) * (EDGE_EASE * 0.5));
-            }
-
-            this.setValue(clamp(clamped));
+            int trackWidth = Math.max(2, trackEnd - trackStart);
+            double normalized = (mouseX - trackStart) / (trackWidth - 1.0);
+            this.setValue(clamp(normalized));
         }
 
         private static double clamp(double value) {
