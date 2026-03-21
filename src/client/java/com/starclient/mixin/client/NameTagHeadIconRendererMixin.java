@@ -124,7 +124,7 @@ public class NameTagHeadIconRendererMixin {
         int headSize = font.lineHeight - 1;
         float textLeft = submit.x();
         float textWidth = font.width(submit.text());
-        float barLeft = textLeft - headSize - 5;
+        float barLeft = textLeft - headSize - 4;
         float barRight = textLeft + textWidth;
 
         float barTop = submit.y() + headSize + 1;
