@@ -1,4 +1,4 @@
-package com.starclient.screen;
+package com.starclient.screen.gui;
 
 import org.jspecify.annotations.NonNull;
 

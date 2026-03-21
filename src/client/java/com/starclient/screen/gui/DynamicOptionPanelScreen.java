@@ -1,4 +1,4 @@
-package com.starclient.screen;
+package com.starclient.screen.gui;
 
 import com.starclient.StarClientOptions;
 import net.minecraft.client.gui.GuiGraphics;
@@ -862,7 +862,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         drawFloatingDraggedSection(context, mouseX, mouseY);
     }
 
-    private void drawFloatingDraggedSection(GuiGraphics context, int mouseX, int mouseY) {
+    private void drawFloatingDraggedSection(@NonNull GuiGraphics context, int mouseX, int mouseY) {
         if (!draggingSection || draggingSectionKey == null) {
             return;
         }
@@ -922,7 +922,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
     }
 
-    private void drawResizeGrip(GuiGraphics context, int mouseX, int mouseY) {
+    private void drawResizeGrip(@NonNull GuiGraphics context, int mouseX, int mouseY) {
         int panelX = getPanelX();
         int panelY = getPanelY();
 
@@ -932,23 +932,18 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 && mouseY >= handleY && mouseY <= panelY + panelHeight;
 
         int lineColor = hovered ? getControlAccentColor() : getControlBorderColor();
-        context.fill(handleX, handleY, panelX + panelWidth - 1, panelY + panelHeight - 1, PANEL_COLOR);
-
-        int endX = panelX + panelWidth - 3;
-        int endY = panelY + panelHeight - 3;
-        for (int i = 0; i < 3; i++) {
-            int startX = endX - 2 - (i * 3);
-            int startY = endY;
-            int diagonalLength = 3 + i;
-            for (int step = 0; step < diagonalLength; step++) {
-                int px = startX + step;
-                int py = startY - step;
-                context.fill(px, py, px + 1, py + 1, lineColor);
-            }
-        }
+        DynamicOptionPanelRenderHelper.drawResizeGrip(
+                context,
+                panelX,
+                panelY,
+                panelWidth,
+                panelHeight,
+                RESIZE_HANDLE_SIZE,
+                lineColor,
+                PANEL_COLOR);
     }
 
-    private void drawCustomCloseButton(GuiGraphics context) {
+    private void drawCustomCloseButton(@NonNull GuiGraphics context) {
         Button closeButton = this.closeButtonWidget;
         Minecraft client = this.minecraft;
         if (closeButton == null || client == null) {
@@ -984,7 +979,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.fill(faceX + faceSize - 1, faceY + faceSize - 1, faceX + faceSize, faceY + faceSize, cornerMask);
     }
 
-    private void drawCustomSearchWidget(GuiGraphics context) {
+    private void drawCustomSearchWidget(@NonNull GuiGraphics context) {
         EditBox search = this.searchWidget;
         SearchRenderBox searchBox = this.searchRenderBox;
         if (search == null || searchBox == null) {
@@ -1016,22 +1011,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         drawMagnifierIcon(context, iconCenterX, iconCenterY, getControlValueColor());
     }
 
-    private void drawMagnifierIcon(GuiGraphics context, int centerX, int centerY, int color) {
-        int radius = 3;
-        int left = centerX - radius;
-        int top = centerY - radius;
-        int right = centerX + radius;
-        int bottom = centerY + radius;
-
-        context.fill(left + 1, top, right, top + 1, color);
-        context.fill(left + 1, bottom, right, bottom + 1, color);
-        context.fill(left, top + 1, left + 1, bottom, color);
-        context.fill(right, top + 1, right + 1, bottom, color);
-        context.fill(centerX + 2, centerY + 2, centerX + 5, centerY + 3, color);
-        context.fill(centerX + 3, centerY + 3, centerX + 4, centerY + 5, color);
+    private void drawMagnifierIcon(@NonNull GuiGraphics context, int centerX, int centerY, int color) {
+        DynamicOptionPanelRenderHelper.drawMagnifierIcon(context, centerX, centerY, color);
     }
 
-    private void drawCustomTabWidgets(GuiGraphics context) {
+    private void drawCustomTabWidgets(@NonNull GuiGraphics context) {
         for (TabRenderBox tab : tabRenderBoxes) {
             boolean selected = tab.index() == selectedTabIndex;
             boolean hovered = tab.button().isHoveredOrFocused();
@@ -1055,7 +1039,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
     }
 
-    private void drawCustomSubTabWidgets(GuiGraphics context) {
+    private void drawCustomSubTabWidgets(@NonNull GuiGraphics context) {
         for (SubTabRenderBox subTab : subTabRenderBoxes) {
             boolean selected = Objects.equals(selectedSubTabLabel, subTab.label());
             boolean hovered = subTab.button().isHoveredOrFocused();
@@ -1077,7 +1061,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
     }
 
-    private void drawCustomControlWidgets(GuiGraphics context, int mouseX, int mouseY) {
+    private void drawCustomControlWidgets(@NonNull GuiGraphics context, int mouseX, int mouseY) {
         for (ControlRenderBox box : controlRenderBoxes) {
             if (draggingSection && Objects.equals(draggingSectionKey, box.sectionKey())) {
                 continue;
@@ -1107,125 +1091,107 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
     }
 
-    private void drawHuePickerControl(GuiGraphics context, ControlRenderBox box) {
+    private void drawHuePickerControl(@NonNull GuiGraphics context, ControlRenderBox box) {
         int x = box.x();
         int y = box.y();
         int width = box.width();
-
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 3,
-                CONTROL_TEXT_COLOR, false);
-
-        int gradientX = x + 6;
-        int gradientY = y + 14;
-        int gradientWidth = width - 28;
-        int gradientHeight = 2;
-
-        if (gradientWidth > 0) {
-            for (int i = 0; i < gradientWidth; i++) {
-                float hue = i / (float) Math.max(1, gradientWidth - 1);
-                int color = (0xFF << 24) | (Color.HSBtoRGB(hue, 0.65f, 0.95f) & 0x00FFFFFF);
-                context.fill(gradientX + i, gradientY, gradientX + i + 1, gradientY + gradientHeight, color);
-            }
-        }
-
-        context.fill(gradientX, gradientY - 1, gradientX + gradientWidth, gradientY, getControlBorderColor());
-        context.fill(gradientX, gradientY + gradientHeight, gradientX + gradientWidth, gradientY + gradientHeight + 1,
-                getControlBorderColor());
-
         DoubleSupplier hueGetter = box.hueGetter();
         double hueValue = hueGetter == null ? 0.0 : hueGetter.getAsDouble();
-        double clampedHue = Math.max(0.0, Math.min(1.0, hueValue));
-        int handleX = gradientX + (int) Math.round(clampedHue * Math.max(0, gradientWidth - 1));
-        context.fill(handleX - 1, gradientY - 2, handleX + 1, gradientY + gradientHeight + 2, 0xFFFFFFFF);
-
-        int swatchColor = (0xFF << 24) | (Color.HSBtoRGB((float) clampedHue, 0.65f, 0.95f) & 0x00FFFFFF);
-        int swatchX = x + width - 16;
-        int swatchY = y + 5;
-        context.fill(swatchX, swatchY, swatchX + 10, swatchY + 10, swatchColor);
-        context.fill(swatchX, swatchY, swatchX + 10, swatchY + 1, getControlBorderColor());
-        context.fill(swatchX, swatchY + 9, swatchX + 10, swatchY + 10, getControlBorderColor());
-        context.fill(swatchX, swatchY, swatchX + 1, swatchY + 10, getControlBorderColor());
-        context.fill(swatchX + 9, swatchY, swatchX + 10, swatchY + 10, getControlBorderColor());
+        DynamicOptionPanelRenderHelper.drawHuePickerControl(
+                context,
+                this.font,
+                box.label(),
+                x,
+                y,
+                width,
+                hueValue,
+                CONTROL_TEXT_COLOR,
+                getControlBorderColor());
     }
 
-    private void drawToggleControl(GuiGraphics context, ControlRenderBox box) {
+    private void drawToggleControl(@NonNull GuiGraphics context, ControlRenderBox box) {
         int x = box.x();
         int y = box.y();
         int width = box.width();
         int height = box.height();
 
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 6,
-                CONTROL_TEXT_COLOR, false);
-
-        int toggleSize = 10;
-        int toggleX = x + width - toggleSize - 6;
-        int toggleY = y + (height - toggleSize) / 2;
-        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + toggleSize, GROUP_COLOR);
-        int controlBorderColor = getControlBorderColor();
-        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + 1, controlBorderColor);
-        context.fill(toggleX, toggleY + toggleSize - 1, toggleX + toggleSize, toggleY + toggleSize,
-                controlBorderColor);
-        context.fill(toggleX, toggleY, toggleX + 1, toggleY + toggleSize, controlBorderColor);
-        context.fill(toggleX + toggleSize - 1, toggleY, toggleX + toggleSize, toggleY + toggleSize,
-                controlBorderColor);
-
         Supplier<Boolean> toggleGetter = box.toggleGetter();
         boolean enabled = toggleGetter != null && toggleGetter.get();
-        if (enabled) {
-            context.fill(toggleX + 2, toggleY + 2, toggleX + toggleSize - 2, toggleY + toggleSize - 2,
-                    getControlAccentColor());
-        }
+        DynamicOptionPanelRenderHelper.drawToggleControl(
+                context,
+                this.font,
+                box.label(),
+                x,
+                y,
+                width,
+                height,
+                enabled,
+                CONTROL_TEXT_COLOR,
+                GROUP_COLOR,
+                getControlBorderColor(),
+                getControlAccentColor());
     }
 
-    private void drawActionControl(GuiGraphics context, ControlRenderBox box) {
+    private void drawActionControl(@NonNull GuiGraphics context, ControlRenderBox box) {
         int x = box.x();
         int y = box.y();
         int width = box.width();
 
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 6,
-                CONTROL_TEXT_COLOR, false);
-        context.drawString(this.font, Component.literal("+"), x + width - 10, y + 6, getControlValueColor(), false);
+        DynamicOptionPanelRenderHelper.drawActionControl(
+                context,
+                this.font,
+                box.label(),
+                x,
+                y,
+                width,
+                CONTROL_TEXT_COLOR,
+                getControlValueColor());
     }
 
-    private void drawSliderControl(GuiGraphics context, ControlRenderBox box) {
+    private void drawSliderControl(@NonNull GuiGraphics context, ControlRenderBox box) {
         int x = box.x();
         int y = box.y();
         int width = box.width();
-
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 3,
-                CONTROL_TEXT_COLOR, false);
 
         Supplier<String> sliderTextGetter = box.sliderTextGetter();
         String valueTextRaw = sliderTextGetter == null ? null : sliderTextGetter.get();
         String valueText = valueTextRaw == null ? "" : valueTextRaw;
-        int valueTextWidth = this.font.width(valueText);
-        context.drawString(this.font, Component.literal(valueText), x + width - valueTextWidth - 6, y + 3,
-                getControlValueColor(), false);
-
-        int trackX = x + 6;
-        int trackY = y + 14;
-        int trackWidth = width - 12;
-        context.fill(trackX, trackY, trackX + trackWidth, trackY + 2, getControlBorderColor());
 
         DoubleSupplier sliderProgressGetter = box.sliderProgressGetter();
         double progress = sliderProgressGetter == null ? 0.0 : sliderProgressGetter.getAsDouble();
-        int fillWidth = (int) Math.round(trackWidth * Math.max(0.0, Math.min(1.0, progress)));
-        context.fill(trackX, trackY, trackX + fillWidth, trackY + 2, getControlAccentColor());
+
+        DynamicOptionPanelRenderHelper.drawSliderControl(
+                context,
+                this.font,
+                box.label(),
+                valueText,
+                x,
+                y,
+                width,
+                progress,
+                CONTROL_TEXT_COLOR,
+                getControlValueColor(),
+                getControlBorderColor(),
+                getControlAccentColor());
     }
 
-    private void drawGroupBox(GuiGraphics context, int x, int y, int width, int height, String title) {
-        context.fill(x, y, x + width, y + height, GROUP_COLOR);
-        int panelInnerBorderColor = getPanelInnerBorderColor();
-        context.fill(x, y, x + width, y + 1, panelInnerBorderColor);
-        context.fill(x, y + height - 1, x + width, y + height, panelInnerBorderColor);
-        context.fill(x, y, x + 1, y + height, panelInnerBorderColor);
-        context.fill(x + width - 1, y, x + width, y + height, panelInnerBorderColor);
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(title)), x + 8, y + 7,
-                getSubtitleColor(), false);
+    private void drawGroupBox(@NonNull GuiGraphics context, int x, int y, int width, int height,
+            @NonNull String title) {
+        DynamicOptionPanelRenderHelper.drawGroupBox(
+                context,
+                this.font,
+                x,
+                y,
+                width,
+                height,
+                title,
+                GROUP_COLOR,
+                getPanelInnerBorderColor(),
+                getSubtitleColor());
     }
 
-    private record SectionRenderBox(int x, int y, int width, int height, String title, int column,
-            String sectionKey) {
+    private record SectionRenderBox(int x, int y, int width, int height, @NonNull String title, int column,
+            @NonNull String sectionKey) {
     }
 
     private enum ControlVisualType {

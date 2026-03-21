@@ -1,4 +1,4 @@
-package com.starclient.screen;
+package com.starclient.screen.gui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import org.jspecify.annotations.NonNull;

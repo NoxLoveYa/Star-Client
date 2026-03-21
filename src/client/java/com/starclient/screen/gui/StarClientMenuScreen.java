@@ -1,4 +1,4 @@
-package com.starclient.screen;
+package com.starclient.screen.gui;
 
 import com.starclient.StarClientOptions;
 import java.awt.Color;

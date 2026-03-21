@@ -1,4 +1,4 @@
-package com.starclient.screen;
+package com.starclient.screen.gui;
 
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.input.MouseButtonEvent;
