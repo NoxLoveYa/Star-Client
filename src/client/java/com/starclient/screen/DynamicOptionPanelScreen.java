@@ -2,7 +2,6 @@ package com.starclient.screen;
 
 import com.starclient.StarClientOptions;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -41,6 +40,9 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int SEARCH_BG_COLOR = new Color(10, 10, 14, 230).getRGB();
     private static final int SEARCH_BG_FOCUS_COLOR = new Color(14, 14, 20, 238).getRGB();
     private static final int SEARCH_PLACEHOLDER_COLOR = new Color(112, 110, 126, 255).getRGB();
+    private static final int SEARCH_FRAME_DEFAULT_WIDTH = 130;
+    private static final int SEARCH_FRAME_MIN_WIDTH = 88;
+    private static final int SEARCH_FRAME_RIGHT_MARGIN = 40;
 
     private static final int DEFAULT_PANEL_WIDTH = 560;
     private static final int DEFAULT_PANEL_HEIGHT = 360;
@@ -285,9 +287,9 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         this.addRenderableWidget(closeButton);
         this.closeButtonWidget = closeButton;
 
-        int searchFrameX = panelX + panelWidth - 170;
+        int searchFrameWidth = getSearchFrameWidth();
+        int searchFrameX = getSearchFrameX(panelX, searchFrameWidth);
         int searchFrameY = panelY + 7;
-        int searchFrameWidth = 130;
         int searchFrameHeight = 16;
         int searchIconLaneWidth = 14;
 
@@ -319,7 +321,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int minTabSpacing = 1;
         int tabX = panelX + 116;
 
-        int searchFrameX = panelX + panelWidth - 170;
+        int searchFrameWidth = getSearchFrameWidth();
+        int searchFrameX = getSearchFrameX(panelX, searchFrameWidth);
         int tabRightLimit = searchFrameX - 8;
         int tabCount = tabs.size();
         if (tabCount <= 0) {
@@ -359,6 +362,16 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     .add(new TabRenderBox(boundedTabX, tabY, tabWidth, tabHeight, tabButton, tab.label(), tabIndex));
             tabX += tabWidth + tabSpacing;
         }
+    }
+
+    private int getSearchFrameWidth() {
+        int widthLoss = Math.max(0, DEFAULT_PANEL_WIDTH - panelWidth);
+        int scaled = SEARCH_FRAME_DEFAULT_WIDTH - (widthLoss / 2);
+        return Math.max(SEARCH_FRAME_MIN_WIDTH, Math.min(SEARCH_FRAME_DEFAULT_WIDTH, scaled));
+    }
+
+    private int getSearchFrameX(int panelX, int searchFrameWidth) {
+        return panelX + panelWidth - searchFrameWidth - SEARCH_FRAME_RIGHT_MARGIN;
     }
 
     private void addSubTabButtons(int panelX, int panelY) {
@@ -1211,34 +1224,6 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 getSubtitleColor(), false);
     }
 
-    public record MenuTab(@NonNull String label, List<@NonNull MenuSection> sections) {
-    }
-
-    public record MenuSection(@NonNull String title, @NonNull String subTab, int column,
-            List<@NonNull MenuControl> controls) {
-    }
-
-    public sealed interface MenuControl permits ToggleOption, SliderOption, ActionOption, ColorPickerOption {
-        @NonNull
-        String label();
-    }
-
-    public record ToggleOption(@NonNull String label, Supplier<Boolean> getter, Consumer<Boolean> setter)
-            implements MenuControl {
-    }
-
-    public record SliderOption(@NonNull String label, double min, double max, DoubleSupplier getter,
-            DoubleConsumer setter,
-            Function<Double, @NonNull String> formatter) implements MenuControl {
-    }
-
-    public record ActionOption(@NonNull String label, Runnable action) implements MenuControl {
-    }
-
-    public record ColorPickerOption(@NonNull String label, DoubleSupplier getter, DoubleConsumer setter)
-            implements MenuControl {
-    }
-
     private record SectionRenderBox(int x, int y, int width, int height, String title, int column,
             String sectionKey) {
     }
@@ -1274,101 +1259,5 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     }
 
     private record SearchRenderBox(int x, int y, int width, int height, int iconLaneWidth) {
-    }
-
-    private static final class DynamicSlider extends AbstractSliderButton {
-        private final String label;
-        private final double min;
-        private final double max;
-        private final DoubleConsumer setter;
-        private final DoubleSupplier getter;
-        private final Function<Double, @NonNull String> valueFormatter;
-
-        private DynamicSlider(int x, int y, int width, int height, String label, double min, double max,
-                DoubleSupplier getter, DoubleConsumer setter, Function<Double, @NonNull String> valueFormatter) {
-            super(x, y, width, height, Component.empty(), 0.0);
-            this.label = label;
-            this.min = min;
-            this.max = max;
-            this.setter = setter;
-            this.getter = getter;
-            this.valueFormatter = valueFormatter;
-            syncFromOption();
-        }
-
-        private void syncFromOption() {
-            double current = clamp(getter.getAsDouble(), min, max);
-            this.value = (current - min) / (max - min);
-            this.updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            double current = min + (max - min) * this.value;
-            this.setMessage(Component.literal(label + ": " + valueFormatter.apply(current)));
-        }
-
-        @Override
-        protected void applyValue() {
-            double current = min + (max - min) * this.value;
-            setter.accept(clamp(current, min, max));
-            syncFromOption();
-        }
-
-        private static double clamp(double value, double min, double max) {
-            return Math.max(min, Math.min(max, value));
-        }
-    }
-
-    private static final class HueSlider extends AbstractSliderButton {
-        private static final int TRACK_LEFT_PADDING = 6;
-        private static final int TRACK_RIGHT_PADDING = 22;
-        private final DoubleConsumer setter;
-        private final DoubleSupplier getter;
-
-        private HueSlider(int x, int y, int width, int height, DoubleSupplier getter, DoubleConsumer setter) {
-            super(x, y, width, height, Component.empty(), 0.0);
-            this.setter = setter;
-            this.getter = getter;
-            syncFromOption();
-        }
-
-        private void syncFromOption() {
-            this.value = clamp(getter.getAsDouble());
-            this.updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            this.setMessage(Component.empty());
-        }
-
-        @Override
-        protected void applyValue() {
-            setter.accept(clamp(this.value));
-            syncFromOption();
-        }
-
-        @Override
-        public void onClick(@NonNull MouseButtonEvent mouseButtonEvent, boolean doubleClick) {
-            this.setValueFromTrack(mouseButtonEvent.x());
-        }
-
-        @Override
-        protected void onDrag(@NonNull MouseButtonEvent mouseButtonEvent, double dragX, double dragY) {
-            this.setValueFromTrack(mouseButtonEvent.x());
-        }
-
-        private void setValueFromTrack(double mouseX) {
-            int trackStart = this.getX() + TRACK_LEFT_PADDING;
-            int trackEnd = this.getX() + this.getWidth() - TRACK_RIGHT_PADDING;
-            int trackWidth = Math.max(2, trackEnd - trackStart);
-            double normalized = (mouseX - trackStart) / (trackWidth - 1.0);
-            this.setValue(clamp(normalized));
-        }
-
-        private static double clamp(double value) {
-            return Math.max(0.0, Math.min(1.0, value));
-        }
     }
 }
