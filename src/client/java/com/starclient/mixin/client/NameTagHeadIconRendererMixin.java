@@ -19,6 +19,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Mixin(NameTagFeatureRenderer.class)
 public class NameTagHeadIconRendererMixin {
@@ -31,11 +33,16 @@ public class NameTagHeadIconRendererMixin {
         NameTagFeatureRenderer.Storage storage = submitNodeCollection.getNameTagSubmits();
 
         NameTagStorageAccessor accessor = (NameTagStorageAccessor) storage;
+        Set<String> renderedKeys = new HashSet<>();
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsSeethrough()) {
-            renderHead(submit, bufferSource, font, true);
+            if (renderedKeys.add(buildSubmitKey(submit))) {
+                renderHead(submit, bufferSource, font, true);
+            }
         }
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsNormal()) {
-            renderHead(submit, bufferSource, font, false);
+            if (renderedKeys.add(buildSubmitKey(submit))) {
+                renderHead(submit, bufferSource, font, false);
+            }
         }
 
         bufferSource.endBatch(); // flush before text renders
@@ -65,12 +72,16 @@ public class NameTagHeadIconRendererMixin {
     }
 
     @Unique
+    private String buildSubmitKey(SubmitNodeStorage.NameTagSubmit submit) {
+        return submit.text().getString()
+                + "|" + Float.floatToIntBits(submit.x())
+                + "|" + Float.floatToIntBits(submit.y());
+    }
+
+    @Unique
     private void renderHead(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource,
             Font font, boolean seeThrough) {
         float healthRatio = StarNameTagColorRegistry.getHealthRatio(submit.text());
-        if (healthRatio >= 0f) {
-            renderHealthBar(submit, bufferSource, font, seeThrough, healthRatio);
-        }
 
         Identifier texture = StarNameTagColorRegistry.getHeadTexture(submit.text());
         if (texture == null)
@@ -116,6 +127,10 @@ public class NameTagHeadIconRendererMixin {
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
         consumer.addVertex(pose, x + headSize, y, 0f).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
+
+        if (healthRatio >= 0f) {
+            renderHealthBar(submit, bufferSource, font, seeThrough, healthRatio);
+        }
     }
 
     @Unique
@@ -127,10 +142,10 @@ public class NameTagHeadIconRendererMixin {
         float barLeft = textLeft - headSize - 4;
         float barRight = textLeft + textWidth;
 
-        float barTop = submit.y() + headSize + 1;
-        float barBottom = barTop + 1.0f;
-        float barZ = -0.022f;
-        float fillZ = -0.0215f;
+        float barTop = submit.y() + headSize + 0.9f;
+        float barBottom = barTop + 1.25f;
+        float barZ = -0.01f;
+        float fillZ = -0.0095f;
 
         RenderType barRenderType = seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground();
         VertexConsumer barConsumer = bufferSource.getBuffer(barRenderType);
@@ -143,7 +158,7 @@ public class NameTagHeadIconRendererMixin {
         barConsumer.addVertex(pose, barRight, barTop, barZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
 
         float clampedRatio = Math.max(0f, Math.min(1f, healthRatio));
-        float fillPad = 0.2f;
+        float fillPad = 0.1f;
         float fillLeft = barLeft + fillPad;
         float fillTop = barTop + fillPad;
         float fillBottom = barBottom - fillPad;
@@ -166,5 +181,8 @@ public class NameTagHeadIconRendererMixin {
                     .setLight(STAR$FULL_BRIGHT_LIGHT);
             barConsumer.addVertex(pose, fillRight, fillTop, fillZ).setColor(fillColor).setLight(STAR$FULL_BRIGHT_LIGHT);
         }
+
+        bufferSource.endBatch(barRenderType);
+
     }
 }
