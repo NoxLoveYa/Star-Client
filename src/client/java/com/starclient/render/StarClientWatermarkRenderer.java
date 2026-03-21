@@ -5,7 +5,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.PlayerSkin;
 
 import java.awt.Color;
 import java.time.LocalTime;
@@ -80,15 +82,8 @@ public final class StarClientWatermarkRenderer {
         drawX += sepWidth;
 
         int faceY = y + (height - faceSize) / 2;
-        if (player != null) {
-            PlayerFaceRenderer.draw(context, player.getSkin(), drawX, faceY, faceSize);
-        } else {
-            context.fill(drawX, faceY, drawX + faceSize, faceY + faceSize, HEADER_COLOR);
-            context.fill(drawX, faceY, drawX + faceSize, faceY + 1, panelInnerBorderColor);
-            context.fill(drawX, faceY + faceSize - 1, drawX + faceSize, faceY + faceSize, panelInnerBorderColor);
-            context.fill(drawX, faceY, drawX + 1, faceY + faceSize, panelInnerBorderColor);
-            context.fill(drawX + faceSize - 1, faceY, drawX + faceSize, faceY + faceSize, panelInnerBorderColor);
-        }
+        PlayerSkin displaySkin = Objects.requireNonNull(resolveDisplaySkin(client, player));
+        PlayerFaceRenderer.draw(context, displaySkin, drawX, faceY, faceSize);
 
         drawX += faceSize + gap;
         context.drawString(font, Component.literal(playerName), drawX, textY, TEXT_COLOR, false);
@@ -178,6 +173,19 @@ public final class StarClientWatermarkRenderer {
 
     private static int getPanelInnerBorderColor() {
         return themeColor(0.50f, 0.33f, 220);
+    }
+
+    private static PlayerSkin resolveDisplaySkin(Minecraft client, LocalPlayer player) {
+        if (player != null) {
+            return Objects.requireNonNull(player.getSkin());
+        }
+
+        PlayerSkin lookedUp = client.getSkinManager().createLookup(client.getGameProfile(), false).get();
+        if (lookedUp != null) {
+            return lookedUp;
+        }
+
+        return Objects.requireNonNull(DefaultPlayerSkin.get(client.getGameProfile()));
     }
 
     private record WatermarkLayout(int width, int height) {
