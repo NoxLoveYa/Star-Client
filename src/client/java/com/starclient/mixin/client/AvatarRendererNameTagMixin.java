@@ -22,23 +22,31 @@ import java.awt.*;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererNameTagMixin {
+    @Unique
+    private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
 
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
-    private void submitAvatarNameTag(AvatarRenderState avatarRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
-        if (avatarRenderState.nameTag == null) return;
+    private void submitAvatarNameTag(AvatarRenderState avatarRenderState, PoseStack poseStack,
+            SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
+        if (avatarRenderState.nameTag == null)
+            return;
 
         EntityRenderStateDuck duck = (EntityRenderStateDuck) avatarRenderState;
-        if (!duck.star$isNametag()) return;
+        if (!duck.star$isNametag())
+            return;
 
         LivingEntity living = duck.star$getEntity() instanceof LivingEntity le ? le : null;
         Identifier texture = resolvePlayerTexture(duck, living);
         StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.UvRect.playerFace();
+        float healthRatio = living != null && living.getMaxHealth() > 0f
+                ? (living.getHealth() / living.getMaxHealth())
+                : -1f;
 
         Component nameTag = buildNameTag(living, avatarRenderState.nameTag);
         if (texture != null) {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture, uvRect);
+            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture, uvRect, healthRatio);
         } else {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), null);
+            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), null, uvRect, healthRatio);
         }
 
         submitNodeCollector.submitNameTag(
@@ -47,10 +55,9 @@ public abstract class AvatarRendererNameTagMixin {
                 0,
                 nameTag,
                 !avatarRenderState.isDiscrete,
-                avatarRenderState.lightCoords,
+                STAR$FULL_BRIGHT_LIGHT,
                 avatarRenderState.distanceToCameraSq,
-                cameraRenderState
-        );
+                cameraRenderState);
         ci.cancel();
     }
 
@@ -64,7 +71,8 @@ public abstract class AvatarRendererNameTagMixin {
 
     @Unique
     private Component buildNameTag(LivingEntity living, Component original) {
-        if (living == null) return original;
+        if (living == null)
+            return original;
 
         String healthStr = String.format("%.1f❤ ", living.getHealth());
         ChatFormatting healthColor = getHealthColor(living);
@@ -77,8 +85,10 @@ public abstract class AvatarRendererNameTagMixin {
     @Unique
     private ChatFormatting getHealthColor(LivingEntity living) {
         float ratio = living.getHealth() / living.getMaxHealth();
-        if (ratio > 0.5f) return ChatFormatting.GREEN;
-        if (ratio > 0.25f) return ChatFormatting.YELLOW;
+        if (ratio > 0.5f)
+            return ChatFormatting.GREEN;
+        if (ratio > 0.25f)
+            return ChatFormatting.YELLOW;
         return ChatFormatting.RED;
     }
 }

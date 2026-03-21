@@ -25,6 +25,9 @@ import java.awt.*;
 
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
+    @Unique
+    private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
+
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
     private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
             CameraRenderState cameraRenderState, CallbackInfo ci) {
@@ -40,12 +43,16 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
         Identifier texture = resolveTexture(entity, duck);
         StarNameTagColorRegistry.UvRect uvRect = resolveUv(entity, texture);
+        float healthRatio = livingEntity != null && livingEntity.getMaxHealth() > 0f
+                ? (livingEntity.getHealth() / livingEntity.getMaxHealth())
+                : -1f;
 
         Component nameTag = buildNameTag(livingEntity, entityRenderState.nameTag);
         if (texture != null && uvRect != null) {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture, uvRect);
+            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture, uvRect, healthRatio);
         } else {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), null);
+            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), null,
+                    StarNameTagColorRegistry.UvRect.playerFace(), healthRatio);
         }
 
         submitNodeCollector.submitNameTag(
@@ -54,7 +61,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
                 0,
                 nameTag,
                 !entityRenderState.isDiscrete,
-                entityRenderState.lightCoords,
+                STAR$FULL_BRIGHT_LIGHT,
                 entityRenderState.distanceToCameraSq,
                 cameraRenderState);
         ci.cancel();
