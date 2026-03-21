@@ -8,7 +8,10 @@ public class StarClientOptions {
     public static boolean forcedTagPlayer = true;
     public static boolean forceTagItem = true;
 
-    public static double forceTagDistance = 32 * 64;
+    public static double forceTagDistancePlayer = 32 * 64;
+    public static double forceTagDistanceHostile = 32 * 64;
+    public static double forceTagDistanceMob = 32 * 64;
+    public static double forceTagDistanceItem = 32 * 64;
 
     public static int pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
 

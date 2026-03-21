@@ -23,21 +23,29 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
     private static List<@NonNull MenuTab> buildTabs() {
         MenuSection playerVisibility = new MenuSection("player visibility", "player", 0, listOf(
                 toggle("players", () -> StarClientOptions.forcedTagPlayer,
-                        value -> StarClientOptions.forcedTagPlayer = value)));
+                        value -> StarClientOptions.forcedTagPlayer = value),
+                slider("distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistancePlayer)),
+                        value -> StarClientOptions.forceTagDistancePlayer = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
         MenuSection hostileVisibility = new MenuSection("hostile visibility", "hostiles", 0, listOf(
                 toggle("hostiles", () -> StarClientOptions.forceTagHostile,
-                        value -> StarClientOptions.forceTagHostile = value)));
+                        value -> StarClientOptions.forceTagHostile = value),
+                slider("distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceHostile)),
+                        value -> StarClientOptions.forceTagDistanceHostile = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
         MenuSection mobVisibility = new MenuSection("mob visibility", "mobs", 0, listOf(
                 toggle("mobs", () -> StarClientOptions.forceTagMob,
-                        value -> StarClientOptions.forceTagMob = value)));
-
-        MenuSection playerAppearance = new MenuSection("distance / appearance", "player", 1, listOf(
+                        value -> StarClientOptions.forceTagMob = value),
                 slider("distance", 16.0, 256.0,
-                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistance)),
-                        value -> StarClientOptions.forceTagDistance = value * value,
-                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value))),
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceMob)),
+                        value -> StarClientOptions.forceTagDistanceMob = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
+
+        MenuSection sharedNameTag = new MenuSection("shared nametag", "shared", 0, listOf(
                 slider("bg alpha", 0.0, 255.0,
                         StarClientMenuScreen::getNameTagBackgroundAlpha,
                         StarClientMenuScreen::setNameTagBackgroundAlpha,
@@ -45,7 +53,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
 
         MenuSection itemVisibility = new MenuSection("item visibility", "items", 0, listOf(
                 toggle("items", () -> StarClientOptions.forceTagItem,
-                        value -> StarClientOptions.forceTagItem = value)));
+                        value -> StarClientOptions.forceTagItem = value),
+                slider("distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceItem)),
+                        value -> StarClientOptions.forceTagDistanceItem = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
         MenuSection stars = new MenuSection("shooting stars", "stars", 0, listOf(
                 slider("density", 0.0, 50.0,
@@ -107,12 +119,15 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                     StarClientOptions.forceTagHostile = true;
                     StarClientOptions.forcedTagPlayer = true;
                     StarClientOptions.forceTagItem = true;
-                    StarClientOptions.forceTagDistance = 32 * 64;
+                    StarClientOptions.forceTagDistancePlayer = 32 * 64;
+                    StarClientOptions.forceTagDistanceHostile = 32 * 64;
+                    StarClientOptions.forceTagDistanceMob = 32 * 64;
+                    StarClientOptions.forceTagDistanceItem = 32 * 64;
                     StarClientOptions.pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
                 })));
 
         MenuTab visuals = new MenuTab("visuals",
-                listOf(playerVisibility, playerAppearance, hostileVisibility, mobVisibility, itemVisibility, stars,
+                listOf(playerVisibility, hostileVisibility, mobVisibility, itemVisibility, sharedNameTag, stars,
                         colorRange));
         MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));
 

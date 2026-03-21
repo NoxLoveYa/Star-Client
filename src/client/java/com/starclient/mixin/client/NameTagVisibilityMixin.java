@@ -17,6 +17,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EntityRenderer.class)
 public abstract class NameTagVisibilityMixin<T extends Entity, S extends EntityRenderState> {
 
+        private static double maxForcedDistanceSq() {
+                return Math.max(
+                                Math.max(StarClientOptions.forceTagDistancePlayer,
+                                                StarClientOptions.forceTagDistanceHostile),
+                                Math.max(StarClientOptions.forceTagDistanceMob,
+                                                StarClientOptions.forceTagDistanceItem));
+        }
+
         private static boolean anyForceOptionEnabled() {
                 return StarClientOptions.forceTagHostile
                                 || StarClientOptions.forcedTagPlayer
@@ -27,7 +35,7 @@ public abstract class NameTagVisibilityMixin<T extends Entity, S extends EntityR
         @ModifyConstant(method = "extractRenderState", constant = @Constant(doubleValue = 4096.0))
         private double removeNameTagDistanceLimit(double original) {
                 if (anyForceOptionEnabled()) {
-                        return StarClientOptions.forceTagDistance;
+                        return maxForcedDistanceSq();
                 }
                 return original;
         }
@@ -48,6 +56,21 @@ public abstract class NameTagVisibilityMixin<T extends Entity, S extends EntityR
                                 || (isItem && StarClientOptions.forceTagItem)
                                 || (isNonHostile && StarClientOptions.forceTagMob);
 
-                return vanilla || forced;
+                if (forced) {
+                        if (isHostile) {
+                                return vanilla || distSq < StarClientOptions.forceTagDistanceHostile;
+                        }
+                        if (isPlayer) {
+                                return vanilla || distSq < StarClientOptions.forceTagDistancePlayer;
+                        }
+                        if (isItem) {
+                                return vanilla || distSq < StarClientOptions.forceTagDistanceItem;
+                        }
+                        if (isNonHostile) {
+                                return vanilla || distSq < StarClientOptions.forceTagDistanceMob;
+                        }
+                }
+
+                return vanilla;
         }
 }
