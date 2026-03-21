@@ -221,6 +221,10 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                                 () -> StarClientOptions.menuThemeHueRainbowSpeed,
                                                 value -> StarClientOptions.menuThemeHueRainbowSpeed = (float) value)));
 
+                MenuSection movement = new MenuSection("movement", "movement", 0, listOf(
+                                toggle("water walk", () -> StarClientOptions.waterWalk,
+                                                value -> StarClientOptions.waterWalk = value)));
+
                 MenuSection presets = new MenuSection("misc presets", "reset", 0, listOf(
                                 action("reset star visuals", () -> {
                                         StarClientOptions.shootingStarSpawnDensity = 10.0f;
@@ -269,6 +273,7 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                         StarClientOptions.shootingStarHueMinRainbowSpeed = 0.22f;
                                         StarClientOptions.shootingStarHueMaxRainbowSpeed = 0.22f;
                                         StarClientOptions.menuThemeHueRainbowSpeed = 0.22f;
+                                        StarClientOptions.waterWalk = false;
                                 })));
 
                 MenuTab visuals = new MenuTab("visuals",
@@ -288,9 +293,10 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                                 sharedNameTag,
                                                 stars,
                                                 colorRange));
+                MenuTab movementTab = new MenuTab("movement", listOf(movement));
                 MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));
 
-                return listOf(visuals, misc);
+                return listOf(visuals, movementTab, misc);
         }
 
         private static double getNameTagBackgroundAlpha() {
