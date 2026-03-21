@@ -17,8 +17,10 @@ import org.jspecify.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -74,6 +76,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private final List<ControlRenderBox> controlRenderBoxes = new ArrayList<>();
     private final List<TabRenderBox> tabRenderBoxes = new ArrayList<>();
     private final List<SubTabRenderBox> subTabRenderBoxes = new ArrayList<>();
+    private final Map<String, List<String>> sectionOrderByContext = new HashMap<>();
 
     @Nullable
     private EditBox searchWidget;
@@ -83,6 +86,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private Button closeButtonWidget;
 
     private String selectedSubTabLabel = "";
+    private boolean draggingSection = false;
+    @Nullable
+    private String draggingSectionKey;
+    private double dragSectionOffsetX = 0.0;
+    private double dragSectionOffsetY = 0.0;
 
     protected DynamicOptionPanelScreen(@Nullable Screen previousScreen, Component title,
             List<@NonNull MenuTab> tabs) {
@@ -124,6 +132,18 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             return true;
         }
 
+        if (event.button() == 0) {
+            SectionRenderBox section = findSectionAt(event.x(), event.y(), true);
+            if (section != null) {
+                draggingSection = true;
+                draggingSectionKey = section.sectionKey();
+                dragSectionOffsetX = event.x() - section.x();
+                dragSectionOffsetY = event.y() - section.y();
+                setDragging(true);
+                return true;
+            }
+        }
+
         if (event.button() == 0 && isInResizeHandle(event.x(), event.y())) {
             resizingPanel = true;
             resizeStartMouseX = event.x();
@@ -147,6 +167,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        if (draggingSection && event.button() == 0) {
+            return true;
+        }
+
         if (resizingPanel && event.button() == 0) {
             int widthDelta = (int) Math.round(event.x() - resizeStartMouseX);
             int heightDelta = (int) Math.round(event.y() - resizeStartMouseY);
@@ -170,6 +194,25 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        if (draggingSection && event.button() == 0) {
+            String sourceKey = draggingSectionKey;
+            draggingSection = false;
+            draggingSectionKey = null;
+            dragSectionOffsetX = 0.0;
+            dragSectionOffsetY = 0.0;
+            setDragging(false);
+
+            if (sourceKey != null) {
+                SectionRenderBox source = findSectionByKey(sourceKey);
+                SectionRenderBox target = findSectionAt(event.x(), event.y(), false);
+                if (source != null && target != null && !Objects.equals(source.sectionKey(), target.sectionKey())) {
+                    swapSectionOrder(source.sectionKey(), target.sectionKey());
+                    rebuildMenuWidgets();
+                }
+            }
+            return true;
+        }
+
         if (resizingPanel && event.button() == 0) {
             resizingPanel = false;
             setDragging(false);
@@ -269,24 +312,51 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     private void addTabButtons(int panelX, int panelY) {
         int tabY = panelY + 7;
-        int tabWidth = 76;
         int tabHeight = 16;
-        int tabSpacing = 4;
+        int defaultTabWidth = 76;
+        int minTabWidth = 40;
+        int defaultTabSpacing = 4;
+        int minTabSpacing = 1;
         int tabX = panelX + 116;
+
+        int searchFrameX = panelX + panelWidth - 170;
+        int tabRightLimit = searchFrameX - 8;
+        int tabCount = tabs.size();
+        if (tabCount <= 0) {
+            return;
+        }
+
+        int availableWidth = Math.max(0, tabRightLimit - tabX);
+        int tabSpacing = defaultTabSpacing;
+
+        int tabWidth = defaultTabWidth;
+        if (tabCount > 1) {
+            int widthWithDefaultSpacing = (availableWidth - (tabCount - 1) * defaultTabSpacing) / tabCount;
+            if (widthWithDefaultSpacing < minTabWidth) {
+                tabSpacing = minTabSpacing;
+            }
+            tabWidth = (availableWidth - (tabCount - 1) * tabSpacing) / tabCount;
+        } else {
+            tabWidth = availableWidth;
+        }
+
+        tabWidth = Math.max(minTabWidth, Math.min(defaultTabWidth, tabWidth));
 
         for (int i = 0; i < tabs.size(); i++) {
             int tabIndex = i;
             MenuTab tab = getTabAt(i);
+            int boundedTabX = Math.min(tabX, tabRightLimit - tabWidth);
+            boundedTabX = Math.max(panelX + 116, boundedTabX);
             Button tabButton = Button.builder(Component.literal(Objects.requireNonNull(tab.label())), button -> {
                 selectedTabIndex = tabIndex;
                 selectedSubTabLabel = "";
                 rebuildMenuWidgets();
-            }).bounds(tabX, tabY, tabWidth, tabHeight).build();
+            }).bounds(boundedTabX, tabY, tabWidth, tabHeight).build();
             tabButton.active = tabIndex != selectedTabIndex;
             tabButton.setAlpha(0.0f);
             this.addRenderableWidget(tabButton);
             this.tabRenderBoxes
-                    .add(new TabRenderBox(tabX, tabY, tabWidth, tabHeight, tabButton, tab.label(), tabIndex));
+                    .add(new TabRenderBox(boundedTabX, tabY, tabWidth, tabHeight, tabButton, tab.label(), tabIndex));
             tabX += tabWidth + tabSpacing;
         }
     }
@@ -335,7 +405,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
 
         MenuTab selectedTab = getTabAtClampedIndex(selectedTabIndex);
-        List<@NonNull MenuSection> sections = getSectionsForSelectedSubTab(selectedTab);
+        List<@NonNull MenuSection> sections = orderSectionsForCurrentContext(getSectionsForSelectedSubTab(selectedTab));
 
         int contentX = panelX + 14;
         int contentY = panelY + HEADER_HEIGHT + 22;
@@ -345,13 +415,14 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         int[] columnCursorY = new int[] { contentY, contentY };
 
+        int slotIndex = 0;
         for (MenuSection section : sections) {
             List<@NonNull MenuControl> filtered = filterSectionControls(section, searchText);
             if (filtered.isEmpty()) {
                 continue;
             }
 
-            int column = Math.max(0, Math.min(1, section.column()));
+            int column = slotIndex % 2;
             int x = contentX + (column * (columnW + 8));
             int y = columnCursorY[column];
             int controlCount = filtered.size();
@@ -362,17 +433,20 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 continue;
             }
 
-            sectionRenderBoxes.add(new SectionRenderBox(x, y, columnW, boxHeight, section.title()));
+            sectionRenderBoxes
+                    .add(new SectionRenderBox(x, y, columnW, boxHeight, section.title(), column,
+                            getSectionKey(section)));
 
             int controlY = innerTop;
             for (MenuControl control : filtered) {
                 int controlX = x + 8;
                 int controlW = columnW - 16;
-                addControlWidget(control, controlX, controlY, controlW);
+                addControlWidget(control, controlX, controlY, controlW, getSectionKey(section));
                 controlY += CONTROL_HEIGHT + CONTROL_SPACING;
             }
 
             columnCursorY[column] += boxHeight + 8;
+            slotIndex++;
         }
     }
 
@@ -396,7 +470,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         return filtered;
     }
 
-    private void addControlWidget(MenuControl control, int x, int y, int width) {
+    private void addControlWidget(MenuControl control, int x, int y, int width, @NonNull String sectionKey) {
         if (control instanceof ToggleOption toggleOption) {
             Button toggleButton = Button.builder(Component.empty(), button -> {
                 boolean nextValue = !toggleOption.getter().get();
@@ -418,7 +492,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     toggleOption.getter(),
                     null,
                     null,
-                    null));
+                    null,
+                    sectionKey));
             return;
         }
 
@@ -456,7 +531,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                         double current = sliderOption.getter().getAsDouble();
                         return Math.max(0.0, Math.min(1.0, (current - min) / span));
                     },
-                    null));
+                    null,
+                    sectionKey));
             return;
         }
 
@@ -479,7 +555,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     null,
                     null,
                     null,
-                    null));
+                    null,
+                    sectionKey));
             return;
         }
 
@@ -504,7 +581,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     null,
                     null,
                     null,
-                    colorOption.getter()));
+                    colorOption.getter(),
+                    sectionKey));
         }
     }
 
@@ -545,6 +623,100 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             }
         }
         return labels;
+    }
+
+    private List<@NonNull MenuSection> orderSectionsForCurrentContext(List<@NonNull MenuSection> sections) {
+        if (sections.size() <= 1) {
+            return sections;
+        }
+
+        String contextKey = getSectionOrderContextKey();
+        List<String> savedOrder = sectionOrderByContext.get(contextKey);
+        if (savedOrder == null || savedOrder.isEmpty()) {
+            return sections;
+        }
+
+        Map<String, Integer> indexByKey = new HashMap<>();
+        for (int i = 0; i < savedOrder.size(); i++) {
+            indexByKey.put(savedOrder.get(i), i);
+        }
+
+        List<@NonNull MenuSection> ordered = new ArrayList<>(sections);
+        ordered.sort((left, right) -> {
+            int leftOrder = indexByKey.getOrDefault(getSectionKey(left), Integer.MAX_VALUE);
+            int rightOrder = indexByKey.getOrDefault(getSectionKey(right), Integer.MAX_VALUE);
+            return Integer.compare(leftOrder, rightOrder);
+        });
+        return ordered;
+    }
+
+    private void swapSectionOrder(String sourceKey, String targetKey) {
+        String contextKey = getSectionOrderContextKey();
+        List<String> order = sectionOrderByContext.computeIfAbsent(contextKey, key -> getDefaultSectionOrder());
+
+        int sourceIndex = order.indexOf(sourceKey);
+        int targetIndex = order.indexOf(targetKey);
+        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex == targetIndex) {
+            return;
+        }
+
+        String source = order.get(sourceIndex);
+        order.set(sourceIndex, order.get(targetIndex));
+        order.set(targetIndex, source);
+    }
+
+    private List<String> getDefaultSectionOrder() {
+        if (tabs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        MenuTab tab = getTabAtClampedIndex(selectedTabIndex);
+        List<@NonNull MenuSection> sections = getSectionsForSelectedSubTab(tab);
+        List<String> keys = new ArrayList<>(sections.size());
+        for (MenuSection section : sections) {
+            keys.add(getSectionKey(section));
+        }
+        return keys;
+    }
+
+    private @NonNull String getSectionOrderContextKey() {
+        if (tabs.isEmpty()) {
+            return "";
+        }
+
+        MenuTab tab = getTabAtClampedIndex(selectedTabIndex);
+        String subTab = selectedSubTabLabel;
+        if (subTab.isEmpty()) {
+            subTab = "*";
+        }
+        return tab.label() + "|" + subTab;
+    }
+
+    private static @NonNull String getSectionKey(@NonNull MenuSection section) {
+        return section.title() + "|" + section.subTab() + "|" + section.column();
+    }
+
+    private @Nullable SectionRenderBox findSectionAt(double mouseX, double mouseY, boolean headerOnly) {
+        for (SectionRenderBox box : sectionRenderBoxes) {
+            if (mouseX < box.x() || mouseX > box.x() + box.width() || mouseY < box.y()) {
+                continue;
+            }
+
+            int bottom = headerOnly ? box.y() + 20 : box.y() + box.height();
+            if (mouseY <= bottom) {
+                return box;
+            }
+        }
+        return null;
+    }
+
+    private @Nullable SectionRenderBox findSectionByKey(String sectionKey) {
+        for (SectionRenderBox box : sectionRenderBoxes) {
+            if (Objects.equals(box.sectionKey(), sectionKey)) {
+                return box;
+            }
+        }
+        return null;
     }
 
     private int getPanelX() {
@@ -660,6 +832,9 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.drawString(this.font, Component.literal("starclient"), panelX + 24, panelY + 11, TITLE_COLOR, false);
 
         for (SectionRenderBox box : sectionRenderBoxes) {
+            if (draggingSection && Objects.equals(draggingSectionKey, box.sectionKey())) {
+                continue;
+            }
             drawGroupBox(context, box.x(), box.y(), box.width(), box.height(), box.title());
         }
 
@@ -671,6 +846,67 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
         drawCustomControlWidgets(context, mouseX, mouseY);
+        drawFloatingDraggedSection(context, mouseX, mouseY);
+    }
+
+    private void drawFloatingDraggedSection(GuiGraphics context, int mouseX, int mouseY) {
+        if (!draggingSection || draggingSectionKey == null) {
+            return;
+        }
+
+        SectionRenderBox source = findSectionByKey(draggingSectionKey);
+        if (source == null) {
+            return;
+        }
+
+        int floatX = (int) Math.round(mouseX - dragSectionOffsetX);
+        int floatY = (int) Math.round(mouseY - dragSectionOffsetY);
+
+        drawGroupBox(context, floatX, floatY, source.width(), source.height(), source.title());
+
+        int dx = floatX - source.x();
+        int dy = floatY - source.y();
+        for (ControlRenderBox box : controlRenderBoxes) {
+            if (!Objects.equals(box.sectionKey(), source.sectionKey())) {
+                continue;
+            }
+
+            ControlRenderBox floatingBox = new ControlRenderBox(
+                    box.type(),
+                    box.x() + dx,
+                    box.y() + dy,
+                    box.width(),
+                    box.height(),
+                    box.widget(),
+                    box.label(),
+                    box.toggleGetter(),
+                    box.sliderTextGetter(),
+                    box.sliderProgressGetter(),
+                    box.hueGetter(),
+                    box.sectionKey());
+
+            boolean hovered = floatingBox.widget().isHoveredOrFocused();
+            int background = hovered ? CONTROL_BG_HOVER_COLOR : CONTROL_BG_COLOR;
+
+            int x = floatingBox.x();
+            int y = floatingBox.y();
+            int width = floatingBox.width();
+            int height = floatingBox.height();
+
+            context.fill(x, y, x + width, y + height, background);
+            int borderColor = getControlBorderColor();
+            context.fill(x, y, x + width, y + 1, borderColor);
+            context.fill(x, y + height - 1, x + width, y + height, borderColor);
+            context.fill(x, y, x + 1, y + height, borderColor);
+            context.fill(x + width - 1, y, x + width, y + height, borderColor);
+
+            switch (floatingBox.type()) {
+                case TOGGLE -> drawToggleControl(context, floatingBox);
+                case ACTION -> drawActionControl(context, floatingBox);
+                case SLIDER -> drawSliderControl(context, floatingBox);
+                case HUE_PICKER -> drawHuePickerControl(context, floatingBox);
+            }
+        }
     }
 
     private void drawResizeGrip(GuiGraphics context, int mouseX, int mouseY) {
@@ -830,6 +1066,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     private void drawCustomControlWidgets(GuiGraphics context, int mouseX, int mouseY) {
         for (ControlRenderBox box : controlRenderBoxes) {
+            if (draggingSection && Objects.equals(draggingSectionKey, box.sectionKey())) {
+                continue;
+            }
+
             boolean hovered = box.widget().isHoveredOrFocused();
             int background = hovered ? CONTROL_BG_HOVER_COLOR : CONTROL_BG_COLOR;
 
@@ -999,7 +1239,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             implements MenuControl {
     }
 
-    private record SectionRenderBox(int x, int y, int width, int height, String title) {
+    private record SectionRenderBox(int x, int y, int width, int height, String title, int column,
+            String sectionKey) {
     }
 
     private enum ControlVisualType {
@@ -1020,7 +1261,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             @Nullable Supplier<Boolean> toggleGetter,
             @Nullable Supplier<String> sliderTextGetter,
             @Nullable DoubleSupplier sliderProgressGetter,
-            @Nullable DoubleSupplier hueGetter) {
+            @Nullable DoubleSupplier hueGetter,
+            @NonNull String sectionKey) {
     }
 
     private record TabRenderBox(int x, int y, int width, int height, @NonNull Button button, @NonNull String label,
