@@ -29,7 +29,7 @@ public class StarNameTagColorRegistry {
     }
 
     private static String key(Component nameTag) {
-        return nameTag.getString();
+        return System.identityHashCode(nameTag) + "|" + nameTag.getString();
     }
 
     public static void register(Component nameTag, int bgColor, @Nullable Identifier headTexture) {

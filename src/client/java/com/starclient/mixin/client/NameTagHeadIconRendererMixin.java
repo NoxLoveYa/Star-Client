@@ -82,14 +82,18 @@ public class NameTagHeadIconRendererMixin {
     private void renderHead(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource,
             Font font, boolean seeThrough) {
         float healthRatio = StarNameTagColorRegistry.getHealthRatio(submit.text());
+        int size = font.lineHeight;
+        int headSize = size - 1;
+
+        if (healthRatio >= 0f) {
+            renderHealthBar(submit, bufferSource, font, seeThrough, healthRatio);
+        }
 
         Identifier texture = StarNameTagColorRegistry.getHeadTexture(submit.text());
         if (texture == null)
             return;
         StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.getHeadUv(submit.text());
 
-        int size = font.lineHeight;
-        int headSize = size - 1;
         float x = submit.x() - headSize - 3;
         float y = submit.y(); // adjust this
         float bgZ = -0.01f;
@@ -127,10 +131,6 @@ public class NameTagHeadIconRendererMixin {
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
         consumer.addVertex(pose, x + headSize, y, 0f).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
-
-        if (healthRatio >= 0f) {
-            renderHealthBar(submit, bufferSource, font, seeThrough, healthRatio);
-        }
     }
 
     @Unique
@@ -144,18 +144,11 @@ public class NameTagHeadIconRendererMixin {
 
         float barTop = submit.y() + headSize + 0.9f;
         float barBottom = barTop + 1.25f;
-        float barZ = -0.01f;
         float fillZ = -0.0095f;
 
         RenderType barRenderType = seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground();
         VertexConsumer barConsumer = bufferSource.getBuffer(barRenderType);
         Matrix4f pose = submit.pose();
-
-        int bgColor = new Color(0, 0, 0, 210).getRGB();
-        barConsumer.addVertex(pose, barLeft, barTop, barZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
-        barConsumer.addVertex(pose, barLeft, barBottom, barZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
-        barConsumer.addVertex(pose, barRight, barBottom, barZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
-        barConsumer.addVertex(pose, barRight, barTop, barZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
 
         float clampedRatio = Math.max(0f, Math.min(1f, healthRatio));
         float fillPad = 0.1f;
