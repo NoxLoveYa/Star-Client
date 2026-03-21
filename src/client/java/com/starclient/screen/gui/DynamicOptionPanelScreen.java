@@ -54,6 +54,14 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int CONTROL_HEIGHT = 20;
     private static final int CONTROL_SPACING = 4;
 
+    private static int persistedPanelX = Integer.MIN_VALUE;
+    private static int persistedPanelY = Integer.MIN_VALUE;
+    private static int persistedPanelWidth = DEFAULT_PANEL_WIDTH;
+    private static int persistedPanelHeight = DEFAULT_PANEL_HEIGHT;
+    private static int persistedSelectedTabIndex = 0;
+    private static String persistedSelectedSubTabLabel = "";
+    private static final Map<String, List<String>> persistedSectionOrderByContext = new HashMap<>();
+
     @Nullable
     private final Screen previousScreen;
     protected final ShootingStarsRenderer shootingStarsRenderer = new ShootingStarsRenderer();
@@ -99,12 +107,43 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         super(title);
         this.previousScreen = previousScreen;
         this.tabs = tabs;
+
+        this.panelX = persistedPanelX;
+        this.panelY = persistedPanelY;
+        this.panelWidth = persistedPanelWidth;
+        this.panelHeight = persistedPanelHeight;
+        this.selectedTabIndex = tabs.isEmpty() ? 0 : Math.max(0, Math.min(persistedSelectedTabIndex, tabs.size() - 1));
+        this.selectedSubTabLabel = persistedSelectedSubTabLabel;
+
+        if (!persistedSectionOrderByContext.isEmpty()) {
+            for (Map.Entry<String, List<String>> entry : persistedSectionOrderByContext.entrySet()) {
+                this.sectionOrderByContext.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+        }
     }
 
     @Override
     public void onClose() {
+        persistMenuState();
         if (this.minecraft != null) {
             this.minecraft.setScreen(this.previousScreen);
+        }
+    }
+
+    private void persistMenuState() {
+        clampPanelSize();
+        clampPanelPosition();
+
+        persistedPanelX = this.panelX;
+        persistedPanelY = this.panelY;
+        persistedPanelWidth = this.panelWidth;
+        persistedPanelHeight = this.panelHeight;
+        persistedSelectedTabIndex = this.selectedTabIndex;
+        persistedSelectedSubTabLabel = this.selectedSubTabLabel;
+
+        persistedSectionOrderByContext.clear();
+        for (Map.Entry<String, List<String>> entry : this.sectionOrderByContext.entrySet()) {
+            persistedSectionOrderByContext.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
     }
 

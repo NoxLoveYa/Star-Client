@@ -30,10 +30,10 @@ public class StarClientOptions {
     public static float chamsHueMob = 0.32f;
     public static float chamsHueItem = 0.14f;
 
-    public static float chamsAlphaPlayer = 0.35f;
-    public static float chamsAlphaHostile = 0.35f;
-    public static float chamsAlphaMob = 0.35f;
-    public static float chamsAlphaItem = 0.35f;
+    public static float chamsAlphaPlayer = 1f;
+    public static float chamsAlphaHostile = 1f;
+    public static float chamsAlphaMob = 1f;
+    public static float chamsAlphaItem = 1f;
 
     public static float shootingStarSpawnDensity = 10.0f;
     public static float shootingStarMinSize = 0.75f;
