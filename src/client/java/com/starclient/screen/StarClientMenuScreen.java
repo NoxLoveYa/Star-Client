@@ -63,24 +63,27 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
         MenuSection colorRange = new MenuSection("color range", 1, listOf(
-                slider("hue min", 0.0, 1.0,
+                colorPicker("hue min",
                         () -> StarClientOptions.shootingStarHueMin,
                         value -> {
                             StarClientOptions.shootingStarHueMin = (float) value;
                             if (StarClientOptions.shootingStarHueMax < StarClientOptions.shootingStarHueMin) {
                                 StarClientOptions.shootingStarHueMax = StarClientOptions.shootingStarHueMin;
                             }
-                        },
-                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value))),
-                slider("hue max", 0.0, 1.0,
+                        }),
+                colorPicker("hue max",
                         () -> StarClientOptions.shootingStarHueMax,
                         value -> {
                             StarClientOptions.shootingStarHueMax = (float) value;
                             if (StarClientOptions.shootingStarHueMax < StarClientOptions.shootingStarHueMin) {
                                 StarClientOptions.shootingStarHueMin = StarClientOptions.shootingStarHueMax;
                             }
-                        },
-                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
+                        })));
+
+        MenuSection menuTheme = new MenuSection("menu theme", 1, listOf(
+                colorPicker("menu hue",
+                        () -> StarClientOptions.menuThemeHue,
+                        value -> StarClientOptions.menuThemeHue = (float) Math.max(0.0, Math.min(1.0, value)))));
 
         MenuSection presets = new MenuSection("misc presets", 0, listOf(
                 action("reset star visuals", () -> {
@@ -101,7 +104,7 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
 
         MenuTab nametags = new MenuTab("nametags", listOf(visibility, appearance));
         MenuTab visuals = new MenuTab("visuals", listOf(stars, colorRange));
-        MenuTab misc = new MenuTab("misc", listOf(presets));
+        MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));
 
         return listOf(nametags, visuals, misc);
     }

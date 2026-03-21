@@ -17,4 +17,5 @@ public class StarClientOptions {
     public static float shootingStarMaxSize = 2.75f;
     public static float shootingStarHueMin = 0.0f;
     public static float shootingStarHueMax = 1.0f;
+    public static float menuThemeHue = 0.75f;
 }

@@ -1,5 +1,6 @@
 package com.starclient.screen;
 
+import com.starclient.StarClientOptions;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -28,26 +29,16 @@ import java.util.function.Supplier;
 public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int BACKGROUND_COLOR = new Color(25, 25, 25, 185).getRGB();
     private static final int PANEL_COLOR = new Color(10, 10, 12, 232).getRGB();
-    private static final int PANEL_BORDER_COLOR = new Color(96, 58, 155, 255).getRGB();
-    private static final int PANEL_INNER_BORDER_COLOR = new Color(52, 38, 74, 220).getRGB();
     private static final int HEADER_COLOR = new Color(16, 16, 22, 245).getRGB();
     private static final int GROUP_COLOR = new Color(14, 14, 20, 228).getRGB();
     private static final int TITLE_COLOR = new Color(240, 238, 255, 255).getRGB();
-    private static final int SUBTITLE_COLOR = new Color(178, 151, 230, 255).getRGB();
     private static final int CONTROL_BG_COLOR = new Color(20, 20, 28, 230).getRGB();
     private static final int CONTROL_BG_HOVER_COLOR = new Color(28, 28, 38, 238).getRGB();
-    private static final int CONTROL_BORDER_COLOR = new Color(66, 52, 92, 255).getRGB();
-    private static final int CONTROL_ACCENT_COLOR = new Color(128, 88, 210, 255).getRGB();
     private static final int CONTROL_TEXT_COLOR = new Color(232, 228, 246, 255).getRGB();
-    private static final int CONTROL_VALUE_COLOR = new Color(164, 142, 214, 255).getRGB();
     private static final int TAB_TEXT_COLOR = new Color(154, 148, 172, 255).getRGB();
-    private static final int TAB_ACTIVE_TEXT_COLOR = new Color(224, 219, 244, 255).getRGB();
-    private static final int TAB_HOVER_TEXT_COLOR = new Color(188, 180, 214, 255).getRGB();
     private static final int SEARCH_BG_COLOR = new Color(10, 10, 14, 230).getRGB();
     private static final int SEARCH_BG_FOCUS_COLOR = new Color(14, 14, 20, 238).getRGB();
     private static final int SEARCH_PLACEHOLDER_COLOR = new Color(112, 110, 126, 255).getRGB();
-    private static final int CLOSE_BUTTON_RING_COLOR = new Color(120, 84, 196, 255).getRGB();
-    private static final int CLOSE_BUTTON_HOVER_RING_COLOR = new Color(152, 112, 230, 255).getRGB();
 
     private static final int PANEL_WIDTH = 560;
     private static final int PANEL_HEIGHT = 360;
@@ -166,6 +157,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     protected static @NonNull ActionOption action(@NonNull String label, Runnable action) {
         return new ActionOption(label, action);
+    }
+
+    protected static @NonNull ColorPickerOption colorPicker(@NonNull String label, DoubleSupplier getter,
+            DoubleConsumer setter) {
+        return new ColorPickerOption(label, getter, setter);
     }
 
     @SafeVarargs
@@ -338,6 +334,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     toggleOption.label(),
                     toggleOption.getter(),
                     null,
+                    null,
                     null));
             return;
         }
@@ -375,7 +372,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                         }
                         double current = sliderOption.getter().getAsDouble();
                         return Math.max(0.0, Math.min(1.0, (current - min) / span));
-                    }));
+                    },
+                    null));
             return;
         }
 
@@ -397,7 +395,33 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     actionOption.label(),
                     null,
                     null,
+                    null,
                     null));
+            return;
+        }
+
+        if (control instanceof ColorPickerOption colorOption) {
+            HueSlider hueWidget = new HueSlider(
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    colorOption.getter(),
+                    colorOption.setter());
+            this.addRenderableWidget(hueWidget);
+            hueWidget.setAlpha(0.0f);
+            this.controlRenderBoxes.add(new ControlRenderBox(
+                    ControlVisualType.HUE_PICKER,
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    hueWidget,
+                    colorOption.label(),
+                    null,
+                    null,
+                    null,
+                    colorOption.getter()));
         }
     }
 
@@ -440,6 +464,53 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         panelY = Math.max(0, Math.min(maxY, panelY));
     }
 
+    private int themeColor(float saturation, float brightness, int alpha) {
+        float hue = (float) Math.max(0.0, Math.min(1.0, StarClientOptions.menuThemeHue));
+        int rgb = Color.HSBtoRGB(hue, saturation, brightness) & 0x00FFFFFF;
+        int clampedAlpha = Math.max(0, Math.min(255, alpha));
+        return (clampedAlpha << 24) | rgb;
+    }
+
+    private int getPanelBorderColor() {
+        return themeColor(0.63f, 0.62f, 255);
+    }
+
+    private int getPanelInnerBorderColor() {
+        return themeColor(0.50f, 0.33f, 220);
+    }
+
+    private int getSubtitleColor() {
+        return themeColor(0.35f, 0.90f, 255);
+    }
+
+    private int getControlBorderColor() {
+        return themeColor(0.44f, 0.36f, 255);
+    }
+
+    private int getControlAccentColor() {
+        return themeColor(0.58f, 0.82f, 255);
+    }
+
+    private int getControlValueColor() {
+        return themeColor(0.34f, 0.84f, 255);
+    }
+
+    private int getTabActiveTextColor() {
+        return themeColor(0.12f, 0.98f, 255);
+    }
+
+    private int getTabHoverTextColor() {
+        return themeColor(0.20f, 0.84f, 255);
+    }
+
+    private int getCloseButtonRingColor() {
+        return themeColor(0.60f, 0.76f, 255);
+    }
+
+    private int getCloseButtonHoverRingColor() {
+        return themeColor(0.55f, 0.90f, 255);
+    }
+
     @Override
     public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
@@ -450,18 +521,21 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int panelX = getPanelX();
         int panelY = getPanelY();
 
+        int panelBorderColor = getPanelBorderColor();
+        int panelInnerBorderColor = getPanelInnerBorderColor();
+
         context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, PANEL_COLOR);
         context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + HEADER_HEIGHT, HEADER_COLOR);
-        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + 1, PANEL_BORDER_COLOR);
+        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + 1, panelBorderColor);
         context.fill(panelX, panelY + PANEL_HEIGHT - 1, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT,
-                PANEL_BORDER_COLOR);
-        context.fill(panelX, panelY, panelX + 1, panelY + PANEL_HEIGHT, PANEL_BORDER_COLOR);
+                panelBorderColor);
+        context.fill(panelX, panelY, panelX + 1, panelY + PANEL_HEIGHT, panelBorderColor);
         context.fill(panelX + PANEL_WIDTH - 1, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT,
-                PANEL_BORDER_COLOR);
+                panelBorderColor);
         context.fill(panelX + 1, panelY + HEADER_HEIGHT, panelX + PANEL_WIDTH - 1, panelY + HEADER_HEIGHT + 1,
-                PANEL_INNER_BORDER_COLOR);
+                panelInnerBorderColor);
 
-        context.drawString(this.font, Component.literal("✦"), panelX + 10, panelY + 10, PANEL_BORDER_COLOR, false);
+        context.drawString(this.font, Component.literal("✦"), panelX + 10, panelY + 10, panelBorderColor, false);
         context.drawString(this.font, Component.literal("starclient"), panelX + 24, panelY + 10, TITLE_COLOR, false);
 
         for (SectionRenderBox box : sectionRenderBoxes) {
@@ -493,7 +567,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int size = closeButton.getWidth();
         boolean hovered = closeButton.isHoveredOrFocused();
 
-        int ringColor = hovered ? CLOSE_BUTTON_HOVER_RING_COLOR : CLOSE_BUTTON_RING_COLOR;
+        int ringColor = hovered ? getCloseButtonHoverRingColor() : getCloseButtonRingColor();
         context.fill(x, y, x + size, y + size, GROUP_COLOR);
         context.fill(x, y, x + size, y + 1, ringColor);
         context.fill(x, y + size - 1, x + size, y + size, ringColor);
@@ -526,7 +600,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         boolean focused = search.isFocused();
 
         int bg = focused ? SEARCH_BG_FOCUS_COLOR : SEARCH_BG_COLOR;
-        int border = focused ? CONTROL_ACCENT_COLOR : CONTROL_BORDER_COLOR;
+        int border = focused ? getControlAccentColor() : getControlBorderColor();
 
         context.fill(x, y, x + width, y + height, bg);
         context.fill(x, y, x + width, y + 1, border);
@@ -541,7 +615,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int iconLaneX = x + width - searchBox.iconLaneWidth();
         int iconCenterX = iconLaneX + (searchBox.iconLaneWidth() / 2);
         int iconCenterY = y + (height / 2);
-        drawMagnifierIcon(context, iconCenterX, iconCenterY, CONTROL_VALUE_COLOR);
+        drawMagnifierIcon(context, iconCenterX, iconCenterY, getControlValueColor());
     }
 
     private void drawMagnifierIcon(GuiGraphics context, int centerX, int centerY, int color) {
@@ -563,7 +637,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         for (TabRenderBox tab : tabRenderBoxes) {
             boolean selected = tab.index() == selectedTabIndex;
             boolean hovered = tab.button().isHoveredOrFocused();
-            int textColor = selected ? TAB_ACTIVE_TEXT_COLOR : (hovered ? TAB_HOVER_TEXT_COLOR : TAB_TEXT_COLOR);
+            int textColor = selected ? getTabActiveTextColor() : (hovered ? getTabHoverTextColor() : TAB_TEXT_COLOR);
             String tabLabel = tab.label();
 
             int textWidth = this.font.width(tabLabel);
@@ -573,11 +647,12 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
             if (selected) {
                 int underlineY = tab.y() + tab.height() - 1;
-                context.fill(tab.x() + 6, underlineY, tab.x() + tab.width() - 6, underlineY + 1, CONTROL_ACCENT_COLOR);
+                context.fill(tab.x() + 6, underlineY, tab.x() + tab.width() - 6, underlineY + 1,
+                        getControlAccentColor());
             } else if (hovered) {
                 int underlineY = tab.y() + tab.height() - 1;
                 context.fill(tab.x() + 10, underlineY, tab.x() + tab.width() - 10, underlineY + 1,
-                        CONTROL_BORDER_COLOR);
+                        getControlBorderColor());
             }
         }
     }
@@ -593,17 +668,60 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             int height = box.height();
 
             context.fill(x, y, x + width, y + height, background);
-            context.fill(x, y, x + width, y + 1, CONTROL_BORDER_COLOR);
-            context.fill(x, y + height - 1, x + width, y + height, CONTROL_BORDER_COLOR);
-            context.fill(x, y, x + 1, y + height, CONTROL_BORDER_COLOR);
-            context.fill(x + width - 1, y, x + width, y + height, CONTROL_BORDER_COLOR);
+            int borderColor = getControlBorderColor();
+            context.fill(x, y, x + width, y + 1, borderColor);
+            context.fill(x, y + height - 1, x + width, y + height, borderColor);
+            context.fill(x, y, x + 1, y + height, borderColor);
+            context.fill(x + width - 1, y, x + width, y + height, borderColor);
 
             switch (box.type()) {
                 case TOGGLE -> drawToggleControl(context, box);
                 case ACTION -> drawActionControl(context, box);
                 case SLIDER -> drawSliderControl(context, box);
+                case HUE_PICKER -> drawHuePickerControl(context, box);
             }
         }
+    }
+
+    private void drawHuePickerControl(GuiGraphics context, ControlRenderBox box) {
+        int x = box.x();
+        int y = box.y();
+        int width = box.width();
+
+        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 3,
+                CONTROL_TEXT_COLOR, false);
+
+        int gradientX = x + 6;
+        int gradientY = y + 14;
+        int gradientWidth = width - 28;
+        int gradientHeight = 2;
+
+        if (gradientWidth > 0) {
+            for (int i = 0; i < gradientWidth; i++) {
+                float hue = i / (float) Math.max(1, gradientWidth - 1);
+                int color = (0xFF << 24) | (Color.HSBtoRGB(hue, 0.65f, 0.95f) & 0x00FFFFFF);
+                context.fill(gradientX + i, gradientY, gradientX + i + 1, gradientY + gradientHeight, color);
+            }
+        }
+
+        context.fill(gradientX, gradientY - 1, gradientX + gradientWidth, gradientY, getControlBorderColor());
+        context.fill(gradientX, gradientY + gradientHeight, gradientX + gradientWidth, gradientY + gradientHeight + 1,
+                getControlBorderColor());
+
+        DoubleSupplier hueGetter = box.hueGetter();
+        double hueValue = hueGetter == null ? 0.0 : hueGetter.getAsDouble();
+        double clampedHue = Math.max(0.0, Math.min(1.0, hueValue));
+        int handleX = gradientX + (int) Math.round(clampedHue * Math.max(0, gradientWidth - 1));
+        context.fill(handleX - 1, gradientY - 2, handleX + 1, gradientY + gradientHeight + 2, 0xFFFFFFFF);
+
+        int swatchColor = (0xFF << 24) | (Color.HSBtoRGB((float) clampedHue, 0.65f, 0.95f) & 0x00FFFFFF);
+        int swatchX = x + width - 16;
+        int swatchY = y + 5;
+        context.fill(swatchX, swatchY, swatchX + 10, swatchY + 10, swatchColor);
+        context.fill(swatchX, swatchY, swatchX + 10, swatchY + 1, getControlBorderColor());
+        context.fill(swatchX, swatchY + 9, swatchX + 10, swatchY + 10, getControlBorderColor());
+        context.fill(swatchX, swatchY, swatchX + 1, swatchY + 10, getControlBorderColor());
+        context.fill(swatchX + 9, swatchY, swatchX + 10, swatchY + 10, getControlBorderColor());
     }
 
     private void drawToggleControl(GuiGraphics context, ControlRenderBox box) {
@@ -619,18 +737,19 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int toggleX = x + width - toggleSize - 6;
         int toggleY = y + (height - toggleSize) / 2;
         context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + toggleSize, GROUP_COLOR);
-        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + 1, CONTROL_BORDER_COLOR);
+        int controlBorderColor = getControlBorderColor();
+        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + 1, controlBorderColor);
         context.fill(toggleX, toggleY + toggleSize - 1, toggleX + toggleSize, toggleY + toggleSize,
-                CONTROL_BORDER_COLOR);
-        context.fill(toggleX, toggleY, toggleX + 1, toggleY + toggleSize, CONTROL_BORDER_COLOR);
+                controlBorderColor);
+        context.fill(toggleX, toggleY, toggleX + 1, toggleY + toggleSize, controlBorderColor);
         context.fill(toggleX + toggleSize - 1, toggleY, toggleX + toggleSize, toggleY + toggleSize,
-                CONTROL_BORDER_COLOR);
+                controlBorderColor);
 
         Supplier<Boolean> toggleGetter = box.toggleGetter();
         boolean enabled = toggleGetter != null && toggleGetter.get();
         if (enabled) {
             context.fill(toggleX + 2, toggleY + 2, toggleX + toggleSize - 2, toggleY + toggleSize - 2,
-                    CONTROL_ACCENT_COLOR);
+                    getControlAccentColor());
         }
     }
 
@@ -641,7 +760,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 6,
                 CONTROL_TEXT_COLOR, false);
-        context.drawString(this.font, Component.literal("+"), x + width - 10, y + 6, CONTROL_VALUE_COLOR, false);
+        context.drawString(this.font, Component.literal("+"), x + width - 10, y + 6, getControlValueColor(), false);
     }
 
     private void drawSliderControl(GuiGraphics context, ControlRenderBox box) {
@@ -657,27 +776,28 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         String valueText = valueTextRaw == null ? "" : valueTextRaw;
         int valueTextWidth = this.font.width(valueText);
         context.drawString(this.font, Component.literal(valueText), x + width - valueTextWidth - 6, y + 3,
-                CONTROL_VALUE_COLOR, false);
+                getControlValueColor(), false);
 
         int trackX = x + 6;
         int trackY = y + 14;
         int trackWidth = width - 12;
-        context.fill(trackX, trackY, trackX + trackWidth, trackY + 2, CONTROL_BORDER_COLOR);
+        context.fill(trackX, trackY, trackX + trackWidth, trackY + 2, getControlBorderColor());
 
         DoubleSupplier sliderProgressGetter = box.sliderProgressGetter();
         double progress = sliderProgressGetter == null ? 0.0 : sliderProgressGetter.getAsDouble();
         int fillWidth = (int) Math.round(trackWidth * Math.max(0.0, Math.min(1.0, progress)));
-        context.fill(trackX, trackY, trackX + fillWidth, trackY + 2, CONTROL_ACCENT_COLOR);
+        context.fill(trackX, trackY, trackX + fillWidth, trackY + 2, getControlAccentColor());
     }
 
     private void drawGroupBox(GuiGraphics context, int x, int y, int width, int height, String title) {
         context.fill(x, y, x + width, y + height, GROUP_COLOR);
-        context.fill(x, y, x + width, y + 1, PANEL_INNER_BORDER_COLOR);
-        context.fill(x, y + height - 1, x + width, y + height, PANEL_INNER_BORDER_COLOR);
-        context.fill(x, y, x + 1, y + height, PANEL_INNER_BORDER_COLOR);
-        context.fill(x + width - 1, y, x + width, y + height, PANEL_INNER_BORDER_COLOR);
-        context.drawString(this.font, Component.literal(Objects.requireNonNull(title)), x + 8, y + 7, SUBTITLE_COLOR,
-                false);
+        int panelInnerBorderColor = getPanelInnerBorderColor();
+        context.fill(x, y, x + width, y + 1, panelInnerBorderColor);
+        context.fill(x, y + height - 1, x + width, y + height, panelInnerBorderColor);
+        context.fill(x, y, x + 1, y + height, panelInnerBorderColor);
+        context.fill(x + width - 1, y, x + width, y + height, panelInnerBorderColor);
+        context.drawString(this.font, Component.literal(Objects.requireNonNull(title)), x + 8, y + 7,
+                getSubtitleColor(), false);
     }
 
     public record MenuTab(@NonNull String label, List<@NonNull MenuSection> sections) {
@@ -686,7 +806,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     public record MenuSection(@NonNull String title, int column, List<@NonNull MenuControl> controls) {
     }
 
-    public sealed interface MenuControl permits ToggleOption, SliderOption, ActionOption {
+    public sealed interface MenuControl permits ToggleOption, SliderOption, ActionOption, ColorPickerOption {
         @NonNull
         String label();
     }
@@ -703,13 +823,18 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     public record ActionOption(@NonNull String label, Runnable action) implements MenuControl {
     }
 
+    public record ColorPickerOption(@NonNull String label, DoubleSupplier getter, DoubleConsumer setter)
+            implements MenuControl {
+    }
+
     private record SectionRenderBox(int x, int y, int width, int height, String title) {
     }
 
     private enum ControlVisualType {
         TOGGLE,
         ACTION,
-        SLIDER
+        SLIDER,
+        HUE_PICKER
     }
 
     private record ControlRenderBox(
@@ -722,7 +847,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             @NonNull String label,
             @Nullable Supplier<Boolean> toggleGetter,
             @Nullable Supplier<String> sliderTextGetter,
-            @Nullable DoubleSupplier sliderProgressGetter) {
+            @Nullable DoubleSupplier sliderProgressGetter,
+            @Nullable DoubleSupplier hueGetter) {
     }
 
     private record TabRenderBox(int x, int y, int width, int height, @NonNull Button button, @NonNull String label,
@@ -773,6 +899,69 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         private static double clamp(double value, double min, double max) {
             return Math.max(min, Math.min(max, value));
+        }
+    }
+
+    private static final class HueSlider extends AbstractSliderButton {
+        private static final int TRACK_LEFT_PADDING = 6;
+        private static final int TRACK_RIGHT_PADDING = 22;
+        private static final double EDGE_EASE = 0.04;
+        private final DoubleConsumer setter;
+        private final DoubleSupplier getter;
+
+        private HueSlider(int x, int y, int width, int height, DoubleSupplier getter, DoubleConsumer setter) {
+            super(x, y, width, height, Component.empty(), 0.0);
+            this.setter = setter;
+            this.getter = getter;
+            syncFromOption();
+        }
+
+        private void syncFromOption() {
+            this.value = clamp(getter.getAsDouble());
+            this.updateMessage();
+        }
+
+        @Override
+        protected void updateMessage() {
+            this.setMessage(Component.empty());
+        }
+
+        @Override
+        protected void applyValue() {
+            setter.accept(clamp(this.value));
+            syncFromOption();
+        }
+
+        @Override
+        public void onClick(@NonNull MouseButtonEvent mouseButtonEvent, boolean doubleClick) {
+            this.setValueFromTrack(mouseButtonEvent.x());
+        }
+
+        @Override
+        protected void onDrag(@NonNull MouseButtonEvent mouseButtonEvent, double dragX, double dragY) {
+            this.setValueFromTrack(mouseButtonEvent.x());
+            super.onDrag(mouseButtonEvent, dragX, dragY);
+        }
+
+        private void setValueFromTrack(double mouseX) {
+            int trackStart = this.getX() + TRACK_LEFT_PADDING;
+            int trackEnd = this.getX() + this.getWidth() - TRACK_RIGHT_PADDING;
+            int trackWidth = Math.max(1, trackEnd - trackStart);
+            double normalized = (mouseX - trackStart) / trackWidth;
+            double clamped = clamp(normalized);
+
+            if (clamped <= EDGE_EASE) {
+                clamped = (clamped / EDGE_EASE) * (EDGE_EASE * 0.5);
+            } else if (clamped >= 1.0 - EDGE_EASE) {
+                double topRange = 1.0 - clamped;
+                clamped = 1.0 - ((topRange / EDGE_EASE) * (EDGE_EASE * 0.5));
+            }
+
+            this.setValue(clamp(clamped));
+        }
+
+        private static double clamp(double value) {
+            return Math.max(0.0, Math.min(1.0, value));
         }
     }
 }
