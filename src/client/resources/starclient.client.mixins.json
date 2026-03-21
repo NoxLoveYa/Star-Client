@@ -3,12 +3,15 @@
   "package": "com.starclient.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "EntityCustomTag",
-    "EntityExtractRenderState",
+    "EntityRendererMixin",
+    "EntityRenderStateCaptureMixin",
+    "EntityRendererAccessor",
     "EntityRenderStateMixin",
-    "EntityTagForce",
-    "EntityTagForce$EntityRendererAccessor",
-    "NametagFeatureChange$NameTagStorageMixin"
+    "LivingEntityRenderStateMixin",
+    "NametagFeatureRendererMixin",
+    "NameTagHeadIconRendererMixin",
+    "NameTagStorageAccessor",
+    "NameTagVisibilityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

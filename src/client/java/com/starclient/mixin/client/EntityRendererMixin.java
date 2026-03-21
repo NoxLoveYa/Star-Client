@@ -20,8 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.awt.*;
 
 @Mixin(EntityRenderer.class)
-public abstract class EntityCustomTag<T extends Entity, S extends EntityRenderState> {
-
+public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
     private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
         if (entityRenderState.nameTag == null || !(((EntityRenderStateDuck) entityRenderState).star$isNametag())) return;
@@ -30,7 +29,7 @@ public abstract class EntityCustomTag<T extends Entity, S extends EntityRenderSt
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
 
         Component nameTag = buildNameTag(livingEntity, entityRenderState.nameTag);
-        StarNameTagColorRegistry.register(nameTag, buildBackgroundColor(livingEntity));
+        StarNameTagColorRegistry.register(nameTag, buildBackgroundColor(livingEntity), ((EntityRenderStateDuck) entityRenderState).star$getTexture());
 
         submitNodeCollector.submitNameTag(
                 poseStack,

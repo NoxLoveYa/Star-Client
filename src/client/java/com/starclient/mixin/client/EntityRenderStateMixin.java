@@ -3,12 +3,12 @@ package com.starclient.mixin.client;
 import com.starclient.EntityRenderStateDuck;
 import com.starclient.StarClientOptions;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-// 2. Mixin on EntityRenderState to store it
 @Mixin(EntityRenderState.class)
 public class EntityRenderStateMixin implements EntityRenderStateDuck {
     @Unique
@@ -16,6 +16,9 @@ public class EntityRenderStateMixin implements EntityRenderStateDuck {
 
     @Unique
     private boolean star$nameTag = false;
+
+    @Unique
+    private Identifier star$texture;
 
     @Override
     public void star$setEntity(Entity entity) { this.star$entity = entity; }
@@ -35,4 +38,10 @@ public class EntityRenderStateMixin implements EntityRenderStateDuck {
 
     @Override
     public boolean star$isNametag() { return this.star$nameTag; }
+
+    @Override
+    public void star$setTexture(Identifier texture) { this.star$texture = texture; }
+
+    @Override
+    public Identifier star$getTexture() { return this.star$texture; }
 }
