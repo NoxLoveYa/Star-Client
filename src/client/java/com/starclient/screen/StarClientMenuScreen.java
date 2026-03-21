@@ -18,17 +18,19 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
     }
 
     private static List<@NonNull MenuTab> buildTabs() {
-        MenuSection visibility = new MenuSection("visibility", 0, listOf(
+        MenuSection playerVisibility = new MenuSection("player visibility", "player", 0, listOf(
                 toggle("players", () -> StarClientOptions.forcedTagPlayer,
-                        value -> StarClientOptions.forcedTagPlayer = value),
-                toggle("hostiles", () -> StarClientOptions.forceTagHostile,
-                        value -> StarClientOptions.forceTagHostile = value),
-                toggle("mobs", () -> StarClientOptions.forceTagMob,
-                        value -> StarClientOptions.forceTagMob = value),
-                toggle("items", () -> StarClientOptions.forceTagItem,
-                        value -> StarClientOptions.forceTagItem = value)));
+                        value -> StarClientOptions.forcedTagPlayer = value)));
 
-        MenuSection appearance = new MenuSection("distance / appearance", 1, listOf(
+        MenuSection hostileVisibility = new MenuSection("hostile visibility", "hostiles", 0, listOf(
+                toggle("hostiles", () -> StarClientOptions.forceTagHostile,
+                        value -> StarClientOptions.forceTagHostile = value)));
+
+        MenuSection mobVisibility = new MenuSection("mob visibility", "mobs", 0, listOf(
+                toggle("mobs", () -> StarClientOptions.forceTagMob,
+                        value -> StarClientOptions.forceTagMob = value)));
+
+        MenuSection playerAppearance = new MenuSection("distance / appearance", "player", 1, listOf(
                 slider("distance", 16.0, 256.0,
                         () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistance)),
                         value -> StarClientOptions.forceTagDistance = value * value,
@@ -38,7 +40,11 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         StarClientMenuScreen::setNameTagBackgroundAlpha,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f", value)))));
 
-        MenuSection stars = new MenuSection("shooting stars", 0, listOf(
+        MenuSection itemVisibility = new MenuSection("item visibility", "items", 0, listOf(
+                toggle("items", () -> StarClientOptions.forceTagItem,
+                        value -> StarClientOptions.forceTagItem = value)));
+
+        MenuSection stars = new MenuSection("shooting stars", "stars", 0, listOf(
                 slider("density", 0.0, 50.0,
                         () -> StarClientOptions.shootingStarSpawnDensity,
                         value -> StarClientOptions.shootingStarSpawnDensity = (float) value,
@@ -62,7 +68,7 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         },
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
 
-        MenuSection colorRange = new MenuSection("color range", 1, listOf(
+        MenuSection colorRange = new MenuSection("color range", "stars", 1, listOf(
                 colorPicker("hue min",
                         () -> StarClientOptions.shootingStarHueMin,
                         value -> {
@@ -80,12 +86,12 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                             }
                         })));
 
-        MenuSection menuTheme = new MenuSection("menu theme", 1, listOf(
+        MenuSection menuTheme = new MenuSection("menu theme", "theme", 0, listOf(
                 colorPicker("menu hue",
                         () -> StarClientOptions.menuThemeHue,
                         value -> StarClientOptions.menuThemeHue = (float) Math.max(0.0, Math.min(1.0, value)))));
 
-        MenuSection presets = new MenuSection("misc presets", 0, listOf(
+        MenuSection presets = new MenuSection("misc presets", "reset", 0, listOf(
                 action("reset star visuals", () -> {
                     StarClientOptions.shootingStarSpawnDensity = 10.0f;
                     StarClientOptions.shootingStarMinSize = 0.75f;
@@ -102,11 +108,12 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                     StarClientOptions.pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
                 })));
 
-        MenuTab nametags = new MenuTab("nametags", listOf(visibility, appearance));
-        MenuTab visuals = new MenuTab("visuals", listOf(stars, colorRange));
+        MenuTab visuals = new MenuTab("visuals",
+                listOf(playerVisibility, playerAppearance, hostileVisibility, mobVisibility, itemVisibility, stars,
+                        colorRange));
         MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));
 
-        return listOf(nametags, visuals, misc);
+        return listOf(visuals, misc);
     }
 
     private static double getNameTagBackgroundAlpha() {

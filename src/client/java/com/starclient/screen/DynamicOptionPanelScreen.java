@@ -63,6 +63,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private final List<SectionRenderBox> sectionRenderBoxes = new ArrayList<>();
     private final List<ControlRenderBox> controlRenderBoxes = new ArrayList<>();
     private final List<TabRenderBox> tabRenderBoxes = new ArrayList<>();
+    private final List<SubTabRenderBox> subTabRenderBoxes = new ArrayList<>();
 
     @Nullable
     private EditBox searchWidget;
@@ -70,6 +71,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private SearchRenderBox searchRenderBox;
     @Nullable
     private Button closeButtonWidget;
+
+    private String selectedSubTabLabel = "";
 
     protected DynamicOptionPanelScreen(@Nullable Screen previousScreen, Component title,
             List<@NonNull MenuTab> tabs) {
@@ -178,6 +181,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         this.sectionRenderBoxes.clear();
         this.controlRenderBoxes.clear();
         this.tabRenderBoxes.clear();
+        this.subTabRenderBoxes.clear();
         this.searchWidget = null;
         this.searchRenderBox = null;
         this.closeButtonWidget = null;
@@ -187,6 +191,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         addHeaderWidgets(panelX, panelY);
         addTabButtons(panelX, panelY);
+        addSubTabButtons(panelX, panelY);
         addDynamicSectionWidgets(panelX, panelY);
     }
 
@@ -224,7 +229,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     }
 
     private void addTabButtons(int panelX, int panelY) {
-        int tabY = panelY + 8;
+        int tabY = panelY + 7;
         int tabWidth = 76;
         int tabHeight = 16;
         int tabSpacing = 4;
@@ -235,6 +240,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             MenuTab tab = getTabAt(i);
             Button tabButton = Button.builder(Component.literal(Objects.requireNonNull(tab.label())), button -> {
                 selectedTabIndex = tabIndex;
+                selectedSubTabLabel = "";
                 rebuildMenuWidgets();
             }).bounds(tabX, tabY, tabWidth, tabHeight).build();
             tabButton.active = tabIndex != selectedTabIndex;
@@ -246,18 +252,56 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
     }
 
+    private void addSubTabButtons(int panelX, int panelY) {
+        if (tabs.isEmpty()) {
+            return;
+        }
+
+        MenuTab selectedTab = getTabAtClampedIndex(selectedTabIndex);
+        List<@NonNull String> subTabs = getSubTabs(selectedTab);
+        if (subTabs.isEmpty()) {
+            selectedSubTabLabel = "";
+            return;
+        }
+
+        if (selectedSubTabLabel.isEmpty() || !subTabs.contains(selectedSubTabLabel)) {
+            selectedSubTabLabel = subTabs.get(0);
+        }
+
+        int y = panelY + HEADER_HEIGHT + 4;
+        int x = panelX + 16;
+        int spacing = 6;
+
+        for (String subTabLabel : subTabs) {
+            int textWidth = this.font.width(subTabLabel);
+            int width = Math.max(42, textWidth + 12);
+
+            Button subTabButton = Button.builder(Component.literal(subTabLabel), button -> {
+                selectedSubTabLabel = subTabLabel;
+                rebuildMenuWidgets();
+            }).bounds(x, y, width, 14).build();
+
+            subTabButton.active = !Objects.equals(selectedSubTabLabel, subTabLabel);
+            subTabButton.setAlpha(0.0f);
+            this.addRenderableWidget(subTabButton);
+            this.subTabRenderBoxes.add(new SubTabRenderBox(x, y, width, 14, subTabButton, subTabLabel));
+
+            x += width + spacing;
+        }
+    }
+
     private void addDynamicSectionWidgets(int panelX, int panelY) {
         if (tabs.isEmpty()) {
             return;
         }
 
         MenuTab selectedTab = getTabAtClampedIndex(selectedTabIndex);
-        List<@NonNull MenuSection> sections = getSections(selectedTab);
+        List<@NonNull MenuSection> sections = getSectionsForSelectedSubTab(selectedTab);
 
         int contentX = panelX + 14;
-        int contentY = panelY + HEADER_HEIGHT + 12;
+        int contentY = panelY + HEADER_HEIGHT + 22;
         int contentW = PANEL_WIDTH - 28;
-        int contentH = PANEL_HEIGHT - HEADER_HEIGHT - 24;
+        int contentH = PANEL_HEIGHT - HEADER_HEIGHT - 34;
         int columnW = (contentW - 8) / 2;
 
         int[] columnCursorY = new int[] { contentY, contentY };
@@ -438,8 +482,30 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         return getTabAt(clamped);
     }
 
-    private List<@NonNull MenuSection> getSections(MenuTab tab) {
-        return new ArrayList<>(Objects.requireNonNull(tab.sections()));
+    private List<@NonNull MenuSection> getSectionsForSelectedSubTab(MenuTab tab) {
+        List<@NonNull MenuSection> allSections = new ArrayList<>(Objects.requireNonNull(tab.sections()));
+        if (selectedSubTabLabel.isEmpty()) {
+            return allSections;
+        }
+
+        List<@NonNull MenuSection> filtered = new ArrayList<>();
+        for (MenuSection section : allSections) {
+            if (Objects.equals(section.subTab(), selectedSubTabLabel)) {
+                filtered.add(section);
+            }
+        }
+        return filtered;
+    }
+
+    private List<@NonNull String> getSubTabs(MenuTab tab) {
+        List<@NonNull String> labels = new ArrayList<>();
+        for (MenuSection section : tab.sections()) {
+            String subTab = section.subTab();
+            if (!labels.contains(subTab)) {
+                labels.add(subTab);
+            }
+        }
+        return labels;
     }
 
     private int getPanelX() {
@@ -535,8 +601,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.fill(panelX + 1, panelY + HEADER_HEIGHT, panelX + PANEL_WIDTH - 1, panelY + HEADER_HEIGHT + 1,
                 panelInnerBorderColor);
 
-        context.drawString(this.font, Component.literal("✦"), panelX + 10, panelY + 10, panelBorderColor, false);
-        context.drawString(this.font, Component.literal("starclient"), panelX + 24, panelY + 10, TITLE_COLOR, false);
+        context.drawString(this.font, Component.literal("✦"), panelX + 10, panelY + 11, panelBorderColor, false);
+        context.drawString(this.font, Component.literal("starclient"), panelX + 24, panelY + 11, TITLE_COLOR, false);
 
         for (SectionRenderBox box : sectionRenderBoxes) {
             drawGroupBox(context, box.x(), box.y(), box.width(), box.height(), box.title());
@@ -545,6 +611,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         drawCustomCloseButton(context);
         drawCustomSearchWidget(context);
         drawCustomTabWidgets(context);
+        drawCustomSubTabWidgets(context);
 
         super.render(context, mouseX, mouseY, delta);
         drawCustomControlWidgets(context, mouseX, mouseY);
@@ -652,6 +719,28 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             } else if (hovered) {
                 int underlineY = tab.y() + tab.height() - 1;
                 context.fill(tab.x() + 10, underlineY, tab.x() + tab.width() - 10, underlineY + 1,
+                        getControlBorderColor());
+            }
+        }
+    }
+
+    private void drawCustomSubTabWidgets(GuiGraphics context) {
+        for (SubTabRenderBox subTab : subTabRenderBoxes) {
+            boolean selected = Objects.equals(selectedSubTabLabel, subTab.label());
+            boolean hovered = subTab.button().isHoveredOrFocused();
+            int textColor = selected ? getTabActiveTextColor() : (hovered ? getTabHoverTextColor() : TAB_TEXT_COLOR);
+
+            int textWidth = this.font.width(subTab.label());
+            int textX = subTab.x() + (subTab.width() - textWidth) / 2;
+            int textY = subTab.y() + 3;
+            context.drawString(this.font, Component.literal(subTab.label()), textX, textY, textColor, false);
+
+            int underlineY = subTab.y() + subTab.height() - 1;
+            if (selected) {
+                context.fill(subTab.x() + 4, underlineY, subTab.x() + subTab.width() - 4, underlineY + 1,
+                        getControlAccentColor());
+            } else if (hovered) {
+                context.fill(subTab.x() + 6, underlineY, subTab.x() + subTab.width() - 6, underlineY + 1,
                         getControlBorderColor());
             }
         }
@@ -803,7 +892,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     public record MenuTab(@NonNull String label, List<@NonNull MenuSection> sections) {
     }
 
-    public record MenuSection(@NonNull String title, int column, List<@NonNull MenuControl> controls) {
+    public record MenuSection(@NonNull String title, @NonNull String subTab, int column,
+            List<@NonNull MenuControl> controls) {
     }
 
     public sealed interface MenuControl permits ToggleOption, SliderOption, ActionOption, ColorPickerOption {
@@ -853,6 +943,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     private record TabRenderBox(int x, int y, int width, int height, @NonNull Button button, @NonNull String label,
             int index) {
+    }
+
+    private record SubTabRenderBox(int x, int y, int width, int height, @NonNull Button button,
+            @NonNull String label) {
     }
 
     private record SearchRenderBox(int x, int y, int width, int height, int iconLaneWidth) {
