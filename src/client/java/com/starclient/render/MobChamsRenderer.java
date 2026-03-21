@@ -23,7 +23,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -146,34 +145,18 @@ public final class MobChamsRenderer {
             return false;
         }
 
-        boolean isPlayer = entity.getType() == EntityType.PLAYER || entity instanceof Avatar;
-        boolean isHostile = entity instanceof Enemy;
         boolean isItem = entity.getType() == EntityType.ITEM;
-        boolean isNonHostile = !isItem && !isHostile && !isPlayer && entity instanceof LivingEntity;
 
-        if (!isHostile && !isPlayer && !isItem && !isNonHostile) {
+        if (!isItem) {
             return false;
         }
 
         double distSq = entity.distanceToSqr(cameraPos.x, cameraPos.y, cameraPos.z);
-
-        if (isPlayer) {
-            return StarClientOptions.chamsPlayer && distSq < StarClientOptions.chamsDistancePlayer;
-        }
-        if (isHostile) {
-            return StarClientOptions.chamsHostile && distSq < StarClientOptions.chamsDistanceHostile;
-        }
-        if (isItem) {
-            return StarClientOptions.chamsItem && distSq < StarClientOptions.chamsDistanceItem;
-        }
-        return StarClientOptions.chamsMob && distSq < StarClientOptions.chamsDistanceMob;
+        return StarClientOptions.chamsItem && distSq < StarClientOptions.chamsDistanceItem;
     }
 
     private static boolean hasAnyChamsEnabled() {
-        return StarClientOptions.chamsPlayer
-                || StarClientOptions.chamsHostile
-                || StarClientOptions.chamsMob
-                || StarClientOptions.chamsItem;
+        return StarClientOptions.chamsItem;
     }
 
     private static float[] getColorForEntity(@NonNull Entity entity) {

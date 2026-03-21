@@ -10,6 +10,7 @@
     "EntityRendererAccessor",
     "EntityRenderStateMixin",
     "LivingEntityRenderStateMixin",
+    "LivingEntityModelChamsMixin",
     "NameTagBackgroundColorMixin",
     "NameTagIconRendererMixin",
     "NameTagStorageAccessor",
