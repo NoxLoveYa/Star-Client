@@ -16,7 +16,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntityRenderer.class)
-public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends EntityRenderer<T, S> {
+public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>>
+        extends EntityRenderer<T, S> {
 
     protected LivingEntityRenderStateMixin(EntityRendererProvider.Context context) {
         super(context);
@@ -27,6 +28,10 @@ public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S ext
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void captureTexture(T entity, S entityRenderState, float f, CallbackInfo ci) {
+        if (entityRenderState == null) {
+            return;
+        }
+
         EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
 
         Identifier texture;

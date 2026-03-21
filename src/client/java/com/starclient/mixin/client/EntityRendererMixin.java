@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.awt.*;
+import java.util.Objects;
 
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
@@ -37,7 +37,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
     private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
             CameraRenderState cameraRenderState, CallbackInfo ci) {
-        if (entityRenderState.nameTag == null)
+        if (entityRenderState == null || entityRenderState.nameTag == null)
             return;
 
         EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
@@ -70,14 +70,14 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         }
 
         submitNodeCollector.submitNameTag(
-                poseStack,
+                Objects.requireNonNull(poseStack),
                 entityRenderState.nameTagAttachment,
                 0,
-                nameTag,
+                Objects.requireNonNull(nameTag),
                 !entityRenderState.isDiscrete,
                 STAR$FULL_BRIGHT_LIGHT,
                 entityRenderState.distanceToCameraSq,
-                cameraRenderState);
+                Objects.requireNonNull(cameraRenderState));
         ci.cancel();
     }
 
@@ -520,7 +520,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             if (count > 1) {
                 return Component.empty()
                         .append(Component.literal(count + "x ").withStyle(ChatFormatting.GOLD))
-                        .append(original);
+                        .append(Objects.requireNonNull(original));
             }
             return original;
         }
@@ -533,8 +533,9 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         ChatFormatting healthColor = getHealthColor(living);
 
         return Component.empty()
-                .append(Component.literal(healthStr).withStyle(healthColor))
-                .append(original);
+                .append(Component.literal(Objects.requireNonNull(healthStr))
+                        .withStyle(Objects.requireNonNull(healthColor)))
+                .append(Objects.requireNonNull(original));
     }
 
     @Unique

@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.awt.*;
+import java.util.Objects;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererNameTagMixin {
@@ -29,7 +29,7 @@ public abstract class AvatarRendererNameTagMixin {
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
     private void submitAvatarNameTag(AvatarRenderState avatarRenderState, PoseStack poseStack,
             SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
-        if (avatarRenderState.nameTag == null)
+        if (avatarRenderState == null || avatarRenderState.nameTag == null)
             return;
 
         EntityRenderStateDuck duck = (EntityRenderStateDuck) avatarRenderState;
@@ -53,14 +53,14 @@ public abstract class AvatarRendererNameTagMixin {
         }
 
         submitNodeCollector.submitNameTag(
-                poseStack,
+                Objects.requireNonNull(poseStack),
                 avatarRenderState.nameTagAttachment,
                 0,
-                nameTag,
+                Objects.requireNonNull(nameTag),
                 !avatarRenderState.isDiscrete,
                 STAR$FULL_BRIGHT_LIGHT,
                 avatarRenderState.distanceToCameraSq,
-                cameraRenderState);
+                Objects.requireNonNull(cameraRenderState));
         ci.cancel();
     }
 
@@ -81,8 +81,9 @@ public abstract class AvatarRendererNameTagMixin {
         ChatFormatting healthColor = getHealthColor(living);
 
         return Component.empty()
-                .append(Component.literal(healthStr).withStyle(healthColor))
-                .append(original);
+                .append(Component.literal(Objects.requireNonNull(healthStr))
+                        .withStyle(Objects.requireNonNull(healthColor)))
+                .append(Objects.requireNonNull(original));
     }
 
     @Unique

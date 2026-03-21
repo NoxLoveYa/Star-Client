@@ -14,6 +14,10 @@ public abstract class EntityRenderStateCaptureMixin<T extends Entity, S extends 
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void captureEntity(T entity, S entityRenderState, float f, CallbackInfo ci) {
+        if (entityRenderState == null) {
+            return;
+        }
+
         ((EntityRenderStateDuck) entityRenderState).star$setEntity(entity);
         ((EntityRenderStateDuck) entityRenderState).star$setNametag(entity);
     }

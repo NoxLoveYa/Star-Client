@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.awt.*;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Objects;
 import java.util.Set;
 
 @Mixin(NameTagFeatureRenderer.class)
@@ -65,7 +66,7 @@ public class NameTagIconRendererMixin {
                     -1,
                     false,
                     submit.pose(),
-                    bufferSource,
+                    Objects.requireNonNull(bufferSource),
                     Font.DisplayMode.SEE_THROUGH,
                     0,
                     STAR$FULL_BRIGHT_LIGHT);
