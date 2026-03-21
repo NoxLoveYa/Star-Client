@@ -208,7 +208,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int searchFrameHeight = 16;
         int searchIconLaneWidth = 14;
 
-        EditBox box = new EditBox(this.font, searchFrameX + 4, searchFrameY + 3,
+        EditBox box = new EditBox(this.font, searchFrameX + 4, searchFrameY + 4,
                 searchFrameWidth - searchIconLaneWidth - 6, searchFrameHeight - 4,
                 Component.literal("search"));
         box.setValue(Objects.requireNonNull(searchText));
@@ -535,7 +535,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.fill(x + width - 1, y, x + width, y + height, border);
 
         if (search.getValue().isEmpty() && !focused) {
-            context.drawString(this.font, Component.literal("search"), x + 5, y + 5, SEARCH_PLACEHOLDER_COLOR, false);
+            context.drawString(this.font, Component.literal("search"), x + 5, y + 6, SEARCH_PLACEHOLDER_COLOR, false);
         }
 
         int iconLaneX = x + width - searchBox.iconLaneWidth();
