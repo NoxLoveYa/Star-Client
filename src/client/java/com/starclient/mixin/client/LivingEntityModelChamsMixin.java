@@ -40,7 +40,7 @@ public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S exte
     private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
     private static final RenderPipeline STAR$ENTITY_TRANSLUCENT_NO_DEPTH_PIPELINE = Objects.requireNonNull(
             RenderPipelines.register(
-                    RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                    RenderPipeline.builder(RenderPipelines.ENTITY_EMISSIVE_SNIPPET)
                             .withLocation(
                                     Identifier.fromNamespaceAndPath("starclient", "pipeline/entity_chams_no_depth"))
                             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
@@ -51,7 +51,6 @@ public abstract class LivingEntityModelChamsMixin<T extends LivingEntity, S exte
             texture -> RenderType.create(
                     "starclient_entity_chams_no_depth",
                     RenderSetup.builder(Objects.requireNonNull(STAR$ENTITY_TRANSLUCENT_NO_DEPTH_PIPELINE))
-                            .useLightmap()
                             .useOverlay()
                             .withTexture("Sampler0", Objects.requireNonNull(texture))
                             .sortOnUpload()
