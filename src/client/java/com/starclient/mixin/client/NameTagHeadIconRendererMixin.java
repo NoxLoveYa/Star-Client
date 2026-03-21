@@ -1,6 +1,7 @@
 package com.starclient.mixin.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.starclient.StarClientOptions;
 import com.starclient.StarNameTagColorRegistry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -88,11 +89,11 @@ public class NameTagHeadIconRendererMixin {
             return;
         StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.getHeadUv(submit.text());
 
-        float x = submit.x() - headSize - 3;
+        float x = submit.x() - headSize - 2.5f;
         float y = submit.y(); // adjust this
         float bgZ = -0.01f;
 
-        int bgColor = StarNameTagColorRegistry.get(submit.text());
+        int bgColor = StarClientOptions.pendingNameTagBgColor;
         if (bgColor != -1) {
             RenderType bgRenderType = seeThrough ? RenderTypes.textBackgroundSeeThrough()
                     : RenderTypes.textBackground();
@@ -133,7 +134,7 @@ public class NameTagHeadIconRendererMixin {
         int headSize = font.lineHeight - 1;
         float textLeft = submit.x();
         float textWidth = font.width(submit.text());
-        float barLeft = textLeft - headSize - 4;
+        float barLeft = textLeft - headSize - 3.5f;
         float barRight = textLeft + textWidth;
 
         float barTop = submit.y() + headSize + 0.9f;

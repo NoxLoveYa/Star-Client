@@ -2,6 +2,7 @@ package com.starclient.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.starclient.EntityRenderStateDuck;
+import com.starclient.StarClientOptions;
 import com.starclient.StarNameTagColorRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -44,9 +45,11 @@ public abstract class AvatarRendererNameTagMixin {
 
         Component nameTag = buildNameTag(living, avatarRenderState.nameTag);
         if (texture != null) {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), texture, uvRect, healthRatio);
+            StarNameTagColorRegistry.register(nameTag, StarClientOptions.pendingNameTagBgColor, texture, uvRect,
+                    healthRatio);
         } else {
-            StarNameTagColorRegistry.register(nameTag, Color.BLACK.getRGB(), null, uvRect, healthRatio);
+            StarNameTagColorRegistry.register(nameTag, StarClientOptions.pendingNameTagBgColor, null, uvRect,
+                    healthRatio);
         }
 
         submitNodeCollector.submitNameTag(

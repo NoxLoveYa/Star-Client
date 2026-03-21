@@ -10,5 +10,5 @@ public class StarClientOptions {
 
     public static double forceTagDistance = 18 * 64;
 
-    public static int pendingNameTagBgColor = Color.BLACK.getRGB();
+    public static int pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
 }
