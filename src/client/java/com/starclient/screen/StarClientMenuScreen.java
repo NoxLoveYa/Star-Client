@@ -1,13 +1,16 @@
-package com.starclient.screen.gui;
+package com.starclient.screen;
 
 import com.starclient.StarClientOptions;
+import com.starclient.screen.gui.DynamicOptionPanelScreen;
+import com.starclient.screen.gui.MenuSection;
+import com.starclient.screen.gui.MenuTab;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import java.awt.Color;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
