@@ -40,8 +40,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int SEARCH_BG_FOCUS_COLOR = new Color(14, 14, 20, 238).getRGB();
     private static final int SEARCH_PLACEHOLDER_COLOR = new Color(112, 110, 126, 255).getRGB();
 
-    private static final int PANEL_WIDTH = 560;
-    private static final int PANEL_HEIGHT = 360;
+    private static final int DEFAULT_PANEL_WIDTH = 560;
+    private static final int DEFAULT_PANEL_HEIGHT = 360;
+    private static final int MIN_PANEL_WIDTH = 420;
+    private static final int MIN_PANEL_HEIGHT = 260;
+    private static final int RESIZE_HANDLE_SIZE = 12;
     private static final int HEADER_HEIGHT = 30;
 
     private static final int CONTROL_HEIGHT = 20;
@@ -56,9 +59,16 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private String searchText = "";
     private int panelX = Integer.MIN_VALUE;
     private int panelY = Integer.MIN_VALUE;
+    private int panelWidth = DEFAULT_PANEL_WIDTH;
+    private int panelHeight = DEFAULT_PANEL_HEIGHT;
     private boolean draggingPanel = false;
+    private boolean resizingPanel = false;
     private double dragOffsetX = 0.0;
     private double dragOffsetY = 0.0;
+    private double resizeStartMouseX = 0.0;
+    private double resizeStartMouseY = 0.0;
+    private int resizeStartWidth = DEFAULT_PANEL_WIDTH;
+    private int resizeStartHeight = DEFAULT_PANEL_HEIGHT;
 
     private final List<SectionRenderBox> sectionRenderBoxes = new ArrayList<>();
     private final List<ControlRenderBox> controlRenderBoxes = new ArrayList<>();
@@ -90,9 +100,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Override
     protected void init() {
+        clampPanelSize();
         if (panelX == Integer.MIN_VALUE || panelY == Integer.MIN_VALUE) {
-            panelX = (this.width - PANEL_WIDTH) / 2;
-            panelY = (this.height - PANEL_HEIGHT) / 2;
+            panelX = (this.width - panelWidth) / 2;
+            panelY = (this.height - panelHeight) / 2;
         }
         clampPanelPosition();
         rebuildMenuWidgets();
@@ -101,6 +112,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
+        clampPanelSize();
         clampPanelPosition();
         rebuildMenuWidgets();
     }
@@ -109,6 +121,16 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         boolean handled = super.mouseClicked(event, doubleClick);
         if (handled) {
+            return true;
+        }
+
+        if (event.button() == 0 && isInResizeHandle(event.x(), event.y())) {
+            resizingPanel = true;
+            resizeStartMouseX = event.x();
+            resizeStartMouseY = event.y();
+            resizeStartWidth = panelWidth;
+            resizeStartHeight = panelHeight;
+            setDragging(true);
             return true;
         }
 
@@ -125,6 +147,17 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        if (resizingPanel && event.button() == 0) {
+            int widthDelta = (int) Math.round(event.x() - resizeStartMouseX);
+            int heightDelta = (int) Math.round(event.y() - resizeStartMouseY);
+            panelWidth = resizeStartWidth + widthDelta;
+            panelHeight = resizeStartHeight + heightDelta;
+            clampPanelSize();
+            clampPanelPosition();
+            rebuildMenuWidgets();
+            return true;
+        }
+
         if (draggingPanel && event.button() == 0) {
             panelX = (int) Math.round(event.x() - dragOffsetX);
             panelY = (int) Math.round(event.y() - dragOffsetY);
@@ -137,6 +170,12 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        if (resizingPanel && event.button() == 0) {
+            resizingPanel = false;
+            setDragging(false);
+            return true;
+        }
+
         if (draggingPanel && event.button() == 0) {
             draggingPanel = false;
             setDragging(false);
@@ -197,13 +236,13 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     private void addHeaderWidgets(int panelX, int panelY) {
         Button closeButton = Button.builder(Component.empty(), button -> onClose())
-                .bounds(panelX + PANEL_WIDTH - 28, panelY + 5, 20, 20)
+                .bounds(panelX + panelWidth - 28, panelY + 5, 20, 20)
                 .build();
         closeButton.setAlpha(0.0f);
         this.addRenderableWidget(closeButton);
         this.closeButtonWidget = closeButton;
 
-        int searchFrameX = panelX + PANEL_WIDTH - 170;
+        int searchFrameX = panelX + panelWidth - 170;
         int searchFrameY = panelY + 7;
         int searchFrameWidth = 130;
         int searchFrameHeight = 16;
@@ -300,8 +339,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
         int contentX = panelX + 14;
         int contentY = panelY + HEADER_HEIGHT + 22;
-        int contentW = PANEL_WIDTH - 28;
-        int contentH = PANEL_HEIGHT - HEADER_HEIGHT - 34;
+        int contentW = panelWidth - 28;
+        int contentH = panelHeight - HEADER_HEIGHT - 34;
         int columnW = (contentW - 8) / 2;
 
         int[] columnCursorY = new int[] { contentY, contentY };
@@ -523,9 +562,25 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 && mouseY <= panelY + HEADER_HEIGHT;
     }
 
+    private boolean isInResizeHandle(double mouseX, double mouseY) {
+        int handleX = panelX + panelWidth - RESIZE_HANDLE_SIZE;
+        int handleY = panelY + panelHeight - RESIZE_HANDLE_SIZE;
+        return mouseX >= handleX
+                && mouseX <= panelX + panelWidth
+                && mouseY >= handleY
+                && mouseY <= panelY + panelHeight;
+    }
+
+    private void clampPanelSize() {
+        int maxWidth = Math.max(MIN_PANEL_WIDTH, this.width);
+        int maxHeight = Math.max(MIN_PANEL_HEIGHT, this.height);
+        panelWidth = Math.max(MIN_PANEL_WIDTH, Math.min(maxWidth, panelWidth));
+        panelHeight = Math.max(MIN_PANEL_HEIGHT, Math.min(maxHeight, panelHeight));
+    }
+
     private void clampPanelPosition() {
-        int maxX = Math.max(0, this.width - PANEL_WIDTH);
-        int maxY = Math.max(0, this.height - PANEL_HEIGHT);
+        int maxX = Math.max(0, this.width - panelWidth);
+        int maxY = Math.max(0, this.height - panelHeight);
         panelX = Math.max(0, Math.min(maxX, panelX));
         panelY = Math.max(0, Math.min(maxY, panelY));
     }
@@ -590,15 +645,15 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int panelBorderColor = getPanelBorderColor();
         int panelInnerBorderColor = getPanelInnerBorderColor();
 
-        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, PANEL_COLOR);
-        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + HEADER_HEIGHT, HEADER_COLOR);
-        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + 1, panelBorderColor);
-        context.fill(panelX, panelY + PANEL_HEIGHT - 1, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT,
+        context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, PANEL_COLOR);
+        context.fill(panelX, panelY, panelX + panelWidth, panelY + HEADER_HEIGHT, HEADER_COLOR);
+        context.fill(panelX, panelY, panelX + panelWidth, panelY + 1, panelBorderColor);
+        context.fill(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight,
                 panelBorderColor);
-        context.fill(panelX, panelY, panelX + 1, panelY + PANEL_HEIGHT, panelBorderColor);
-        context.fill(panelX + PANEL_WIDTH - 1, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT,
+        context.fill(panelX, panelY, panelX + 1, panelY + panelHeight, panelBorderColor);
+        context.fill(panelX + panelWidth - 1, panelY, panelX + panelWidth, panelY + panelHeight,
                 panelBorderColor);
-        context.fill(panelX + 1, panelY + HEADER_HEIGHT, panelX + PANEL_WIDTH - 1, panelY + HEADER_HEIGHT + 1,
+        context.fill(panelX + 1, panelY + HEADER_HEIGHT, panelX + panelWidth - 1, panelY + HEADER_HEIGHT + 1,
                 panelInnerBorderColor);
 
         context.drawString(this.font, Component.literal("✦"), panelX + 10, panelY + 11, panelBorderColor, false);
@@ -612,9 +667,36 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         drawCustomSearchWidget(context);
         drawCustomTabWidgets(context);
         drawCustomSubTabWidgets(context);
+        drawResizeGrip(context, mouseX, mouseY);
 
         super.render(context, mouseX, mouseY, delta);
         drawCustomControlWidgets(context, mouseX, mouseY);
+    }
+
+    private void drawResizeGrip(GuiGraphics context, int mouseX, int mouseY) {
+        int panelX = getPanelX();
+        int panelY = getPanelY();
+
+        int handleX = panelX + panelWidth - RESIZE_HANDLE_SIZE;
+        int handleY = panelY + panelHeight - RESIZE_HANDLE_SIZE;
+        boolean hovered = mouseX >= handleX && mouseX <= panelX + panelWidth
+                && mouseY >= handleY && mouseY <= panelY + panelHeight;
+
+        int lineColor = hovered ? getControlAccentColor() : getControlBorderColor();
+        context.fill(handleX, handleY, panelX + panelWidth - 1, panelY + panelHeight - 1, PANEL_COLOR);
+
+        int endX = panelX + panelWidth - 3;
+        int endY = panelY + panelHeight - 3;
+        for (int i = 0; i < 3; i++) {
+            int startX = endX - 2 - (i * 3);
+            int startY = endY;
+            int diagonalLength = 3 + i;
+            for (int step = 0; step < diagonalLength; step++) {
+                int px = startX + step;
+                int py = startY - step;
+                context.fill(px, py, px + 1, py + 1, lineColor);
+            }
+        }
     }
 
     private void drawCustomCloseButton(GuiGraphics context) {
