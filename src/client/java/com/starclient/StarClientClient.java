@@ -15,12 +15,20 @@ public class StarClientClient implements ClientModInitializer {
 			new KeyMapping("key.starclient.open_menu", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT,
 					KeyMapping.Category.MISC));
 	private boolean wasOpenMenuKeyDown = false;
+	private long lastRainbowTickNanos = 0L;
 
 	@Override
 	public void onInitializeClient() {
 		MobChamsRenderer.getInstance().initialize();
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			long now = System.nanoTime();
+			if (lastRainbowTickNanos != 0L) {
+				double elapsedSeconds = (now - lastRainbowTickNanos) / 1_000_000_000.0;
+				StarClientOptions.tickRainbowHues(elapsedSeconds);
+			}
+			lastRainbowTickNanos = now;
+
 			boolean isDown = OPEN_MENU_KEY.isDown()
 					|| org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().handle(),
 							GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;

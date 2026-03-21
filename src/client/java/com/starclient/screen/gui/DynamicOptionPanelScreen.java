@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
@@ -87,6 +88,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private final List<TabRenderBox> tabRenderBoxes = new ArrayList<>();
     private final List<SubTabRenderBox> subTabRenderBoxes = new ArrayList<>();
     private final Map<String, List<String>> sectionOrderByContext = new HashMap<>();
+    private static final Map<String, Boolean> persistedHuePickerRainbowByControlKey = new HashMap<>();
+    private static final Map<String, Double> persistedHuePickerRainbowSpeedByControlKey = new HashMap<>();
 
     @Nullable
     private EditBox searchWidget;
@@ -288,6 +291,24 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     protected static @NonNull ColorPickerOption colorPicker(@NonNull String label, DoubleSupplier getter,
             DoubleConsumer setter) {
         return new ColorPickerOption(label, getter, setter);
+    }
+
+    protected static @NonNull ColorPickerOption colorPicker(@NonNull String label, DoubleSupplier getter,
+            DoubleConsumer setter, BooleanSupplier rainbowGetter, Consumer<Boolean> rainbowSetter) {
+        return new ColorPickerOption(label, getter, setter, rainbowGetter, rainbowSetter);
+    }
+
+    protected static @NonNull ColorPickerOption colorPicker(@NonNull String label, DoubleSupplier getter,
+            DoubleConsumer setter, BooleanSupplier rainbowGetter, Consumer<Boolean> rainbowSetter,
+            DoubleSupplier rainbowSpeedGetter, DoubleConsumer rainbowSpeedSetter) {
+        return new ColorPickerOption(
+                label,
+                getter,
+                setter,
+                rainbowGetter,
+                rainbowSetter,
+                rainbowSpeedGetter,
+                rainbowSpeedSetter);
     }
 
     protected static @NonNull SeparatorOption separator(@NonNull String label) {
@@ -617,13 +638,30 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
 
         if (control instanceof ColorPickerOption colorOption) {
+            String hueControlKey = sectionKey + "::" + colorOption.label();
+            BooleanSupplier rainbowGetter = colorOption.rainbowGetter() != null
+                    ? colorOption.rainbowGetter()
+                    : () -> persistedHuePickerRainbowByControlKey.getOrDefault(hueControlKey, false);
+            Consumer<Boolean> rainbowSetter = colorOption.rainbowSetter() != null
+                    ? colorOption.rainbowSetter()
+                    : enabled -> persistedHuePickerRainbowByControlKey.put(hueControlKey, enabled);
+            DoubleSupplier rainbowSpeedGetter = colorOption.rainbowSpeedGetter() != null
+                    ? colorOption.rainbowSpeedGetter()
+                    : () -> persistedHuePickerRainbowSpeedByControlKey.getOrDefault(hueControlKey, 0.22);
+            DoubleConsumer rainbowSpeedSetter = colorOption.rainbowSpeedSetter() != null
+                    ? colorOption.rainbowSpeedSetter()
+                    : speed -> persistedHuePickerRainbowSpeedByControlKey.put(hueControlKey, speed);
             HueSlider hueWidget = new HueSlider(
                     x,
                     y,
                     width,
                     CONTROL_HEIGHT,
                     colorOption.getter(),
-                    colorOption.setter());
+                    colorOption.setter(),
+                    rainbowGetter,
+                    rainbowSetter,
+                    rainbowSpeedGetter,
+                    rainbowSpeedSetter);
             this.addRenderableWidget(hueWidget);
             hueWidget.setAlpha(0.0f);
             this.controlRenderBoxes.add(new ControlRenderBox(
