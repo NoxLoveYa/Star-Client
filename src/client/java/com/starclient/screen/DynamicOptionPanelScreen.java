@@ -5,6 +5,9 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -37,6 +40,14 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int CONTROL_ACCENT_COLOR = new Color(128, 88, 210, 255).getRGB();
     private static final int CONTROL_TEXT_COLOR = new Color(232, 228, 246, 255).getRGB();
     private static final int CONTROL_VALUE_COLOR = new Color(164, 142, 214, 255).getRGB();
+    private static final int TAB_TEXT_COLOR = new Color(154, 148, 172, 255).getRGB();
+    private static final int TAB_ACTIVE_TEXT_COLOR = new Color(224, 219, 244, 255).getRGB();
+    private static final int TAB_HOVER_TEXT_COLOR = new Color(188, 180, 214, 255).getRGB();
+    private static final int SEARCH_BG_COLOR = new Color(10, 10, 14, 230).getRGB();
+    private static final int SEARCH_BG_FOCUS_COLOR = new Color(14, 14, 20, 238).getRGB();
+    private static final int SEARCH_PLACEHOLDER_COLOR = new Color(112, 110, 126, 255).getRGB();
+    private static final int CLOSE_BUTTON_RING_COLOR = new Color(120, 84, 196, 255).getRGB();
+    private static final int CLOSE_BUTTON_HOVER_RING_COLOR = new Color(152, 112, 230, 255).getRGB();
 
     private static final int PANEL_WIDTH = 560;
     private static final int PANEL_HEIGHT = 360;
@@ -47,7 +58,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     @Nullable
     private final Screen previousScreen;
-    private final ShootingStarsRenderer shootingStarsRenderer = new ShootingStarsRenderer();
+    protected final ShootingStarsRenderer shootingStarsRenderer = new ShootingStarsRenderer();
     private final List<@NonNull MenuTab> tabs;
 
     private int selectedTabIndex = 0;
@@ -60,6 +71,14 @@ public abstract class DynamicOptionPanelScreen extends Screen {
 
     private final List<SectionRenderBox> sectionRenderBoxes = new ArrayList<>();
     private final List<ControlRenderBox> controlRenderBoxes = new ArrayList<>();
+    private final List<TabRenderBox> tabRenderBoxes = new ArrayList<>();
+
+    @Nullable
+    private EditBox searchWidget;
+    @Nullable
+    private SearchRenderBox searchRenderBox;
+    @Nullable
+    private Button closeButtonWidget;
 
     protected DynamicOptionPanelScreen(@Nullable Screen previousScreen, Component title,
             List<@NonNull MenuTab> tabs) {
@@ -162,6 +181,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         this.clearWidgets();
         this.sectionRenderBoxes.clear();
         this.controlRenderBoxes.clear();
+        this.tabRenderBoxes.clear();
+        this.searchWidget = null;
+        this.searchRenderBox = null;
+        this.closeButtonWidget = null;
 
         int panelX = getPanelX();
         int panelY = getPanelY();
@@ -172,21 +195,36 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     }
 
     private void addHeaderWidgets(int panelX, int panelY) {
-        Button closeButton = Button.builder(Component.literal("x"), button -> onClose())
-                .bounds(panelX + PANEL_WIDTH - 24, panelY + 6, 16, 16)
+        Button closeButton = Button.builder(Component.empty(), button -> onClose())
+                .bounds(panelX + PANEL_WIDTH - 28, panelY + 5, 20, 20)
                 .build();
+        closeButton.setAlpha(0.0f);
         this.addRenderableWidget(closeButton);
+        this.closeButtonWidget = closeButton;
 
-        EditBox box = new EditBox(this.font, panelX + PANEL_WIDTH - 170, panelY + 7, 130, 16,
+        int searchFrameX = panelX + PANEL_WIDTH - 170;
+        int searchFrameY = panelY + 7;
+        int searchFrameWidth = 130;
+        int searchFrameHeight = 16;
+        int searchIconLaneWidth = 14;
+
+        EditBox box = new EditBox(this.font, searchFrameX + 4, searchFrameY + 3,
+                searchFrameWidth - searchIconLaneWidth - 6, searchFrameHeight - 4,
                 Component.literal("search"));
         box.setValue(Objects.requireNonNull(searchText));
-        box.setSuggestion("search");
-        box.setBordered(true);
+        box.setSuggestion("");
+        box.setBordered(false);
+        box.setTextColor(CONTROL_TEXT_COLOR);
+        box.setTextColorUneditable(CONTROL_TEXT_COLOR);
+        box.setInvertHighlightedTextColor(false);
         box.setResponder(value -> {
             searchText = value;
             rebuildMenuWidgets();
         });
         this.addRenderableWidget(box);
+        this.searchWidget = box;
+        this.searchRenderBox = new SearchRenderBox(searchFrameX, searchFrameY, searchFrameWidth, searchFrameHeight,
+                searchIconLaneWidth);
     }
 
     private void addTabButtons(int panelX, int panelY) {
@@ -204,7 +242,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 rebuildMenuWidgets();
             }).bounds(tabX, tabY, tabWidth, tabHeight).build();
             tabButton.active = tabIndex != selectedTabIndex;
+            tabButton.setAlpha(0.0f);
             this.addRenderableWidget(tabButton);
+            this.tabRenderBoxes
+                    .add(new TabRenderBox(tabX, tabY, tabWidth, tabHeight, tabButton, tab.label(), tabIndex));
             tabX += tabWidth + tabSpacing;
         }
     }
@@ -427,8 +468,118 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             drawGroupBox(context, box.x(), box.y(), box.width(), box.height(), box.title());
         }
 
+        drawCustomCloseButton(context);
+        drawCustomSearchWidget(context);
+        drawCustomTabWidgets(context);
+
         super.render(context, mouseX, mouseY, delta);
         drawCustomControlWidgets(context, mouseX, mouseY);
+    }
+
+    private void drawCustomCloseButton(GuiGraphics context) {
+        Button closeButton = this.closeButtonWidget;
+        Minecraft client = this.minecraft;
+        if (closeButton == null || client == null) {
+            return;
+        }
+
+        LocalPlayer player = client.player;
+        if (player == null) {
+            return;
+        }
+
+        int x = closeButton.getX();
+        int y = closeButton.getY();
+        int size = closeButton.getWidth();
+        boolean hovered = closeButton.isHoveredOrFocused();
+
+        int ringColor = hovered ? CLOSE_BUTTON_HOVER_RING_COLOR : CLOSE_BUTTON_RING_COLOR;
+        context.fill(x, y, x + size, y + size, GROUP_COLOR);
+        context.fill(x, y, x + size, y + 1, ringColor);
+        context.fill(x, y + size - 1, x + size, y + size, ringColor);
+        context.fill(x, y, x + 1, y + size, ringColor);
+        context.fill(x + size - 1, y, x + size, y + size, ringColor);
+
+        int faceSize = size - 4;
+        int faceX = x + 2;
+        int faceY = y + 2;
+        PlayerFaceRenderer.draw(context, player.getSkin(), faceX, faceY, faceSize);
+
+        int cornerMask = HEADER_COLOR;
+        context.fill(faceX, faceY, faceX + 1, faceY + 1, cornerMask);
+        context.fill(faceX + faceSize - 1, faceY, faceX + faceSize, faceY + 1, cornerMask);
+        context.fill(faceX, faceY + faceSize - 1, faceX + 1, faceY + faceSize, cornerMask);
+        context.fill(faceX + faceSize - 1, faceY + faceSize - 1, faceX + faceSize, faceY + faceSize, cornerMask);
+    }
+
+    private void drawCustomSearchWidget(GuiGraphics context) {
+        EditBox search = this.searchWidget;
+        SearchRenderBox searchBox = this.searchRenderBox;
+        if (search == null || searchBox == null) {
+            return;
+        }
+
+        int x = searchBox.x();
+        int y = searchBox.y();
+        int width = searchBox.width();
+        int height = searchBox.height();
+        boolean focused = search.isFocused();
+
+        int bg = focused ? SEARCH_BG_FOCUS_COLOR : SEARCH_BG_COLOR;
+        int border = focused ? CONTROL_ACCENT_COLOR : CONTROL_BORDER_COLOR;
+
+        context.fill(x, y, x + width, y + height, bg);
+        context.fill(x, y, x + width, y + 1, border);
+        context.fill(x, y + height - 1, x + width, y + height, border);
+        context.fill(x, y, x + 1, y + height, border);
+        context.fill(x + width - 1, y, x + width, y + height, border);
+
+        if (search.getValue().isEmpty() && !focused) {
+            context.drawString(this.font, Component.literal("search"), x + 5, y + 5, SEARCH_PLACEHOLDER_COLOR, false);
+        }
+
+        int iconLaneX = x + width - searchBox.iconLaneWidth();
+        int iconCenterX = iconLaneX + (searchBox.iconLaneWidth() / 2);
+        int iconCenterY = y + (height / 2);
+        drawMagnifierIcon(context, iconCenterX, iconCenterY, CONTROL_VALUE_COLOR);
+    }
+
+    private void drawMagnifierIcon(GuiGraphics context, int centerX, int centerY, int color) {
+        int radius = 3;
+        int left = centerX - radius;
+        int top = centerY - radius;
+        int right = centerX + radius;
+        int bottom = centerY + radius;
+
+        context.fill(left + 1, top, right, top + 1, color);
+        context.fill(left + 1, bottom, right, bottom + 1, color);
+        context.fill(left, top + 1, left + 1, bottom, color);
+        context.fill(right, top + 1, right + 1, bottom, color);
+        context.fill(centerX + 2, centerY + 2, centerX + 5, centerY + 3, color);
+        context.fill(centerX + 3, centerY + 3, centerX + 4, centerY + 5, color);
+    }
+
+    private void drawCustomTabWidgets(GuiGraphics context) {
+        for (TabRenderBox tab : tabRenderBoxes) {
+            boolean selected = tab.index() == selectedTabIndex;
+            boolean hovered = tab.button().isHoveredOrFocused();
+            int textColor = selected ? TAB_ACTIVE_TEXT_COLOR : (hovered ? TAB_HOVER_TEXT_COLOR : TAB_TEXT_COLOR);
+            String tabLabel = tab.label();
+
+            int textWidth = this.font.width(tabLabel);
+            int textX = tab.x() + (tab.width() - textWidth) / 2;
+            int textY = tab.y() + 4;
+            context.drawString(this.font, Component.literal(tabLabel), textX, textY, textColor, false);
+
+            if (selected) {
+                int underlineY = tab.y() + tab.height() - 1;
+                context.fill(tab.x() + 6, underlineY, tab.x() + tab.width() - 6, underlineY + 1, CONTROL_ACCENT_COLOR);
+            } else if (hovered) {
+                int underlineY = tab.y() + tab.height() - 1;
+                context.fill(tab.x() + 10, underlineY, tab.x() + tab.width() - 10, underlineY + 1,
+                        CONTROL_BORDER_COLOR);
+            }
+        }
     }
 
     private void drawCustomControlWidgets(GuiGraphics context, int mouseX, int mouseY) {
@@ -475,7 +626,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.fill(toggleX + toggleSize - 1, toggleY, toggleX + toggleSize, toggleY + toggleSize,
                 CONTROL_BORDER_COLOR);
 
-        boolean enabled = box.toggleGetter() != null && box.toggleGetter().get();
+        Supplier<Boolean> toggleGetter = box.toggleGetter();
+        boolean enabled = toggleGetter != null && toggleGetter.get();
         if (enabled) {
             context.fill(toggleX + 2, toggleY + 2, toggleX + toggleSize - 2, toggleY + toggleSize - 2,
                     CONTROL_ACCENT_COLOR);
@@ -500,7 +652,9 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 3,
                 CONTROL_TEXT_COLOR, false);
 
-        String valueText = box.sliderTextGetter() == null ? "" : box.sliderTextGetter().get();
+        Supplier<String> sliderTextGetter = box.sliderTextGetter();
+        String valueTextRaw = sliderTextGetter == null ? null : sliderTextGetter.get();
+        String valueText = valueTextRaw == null ? "" : valueTextRaw;
         int valueTextWidth = this.font.width(valueText);
         context.drawString(this.font, Component.literal(valueText), x + width - valueTextWidth - 6, y + 3,
                 CONTROL_VALUE_COLOR, false);
@@ -510,7 +664,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         int trackWidth = width - 12;
         context.fill(trackX, trackY, trackX + trackWidth, trackY + 2, CONTROL_BORDER_COLOR);
 
-        double progress = box.sliderProgressGetter() == null ? 0.0 : box.sliderProgressGetter().getAsDouble();
+        DoubleSupplier sliderProgressGetter = box.sliderProgressGetter();
+        double progress = sliderProgressGetter == null ? 0.0 : sliderProgressGetter.getAsDouble();
         int fillWidth = (int) Math.round(trackWidth * Math.max(0.0, Math.min(1.0, progress)));
         context.fill(trackX, trackY, trackX + fillWidth, trackY + 2, CONTROL_ACCENT_COLOR);
     }
@@ -563,11 +718,18 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             int y,
             int width,
             int height,
-            AbstractWidget widget,
-            String label,
+            @NonNull AbstractWidget widget,
+            @NonNull String label,
             @Nullable Supplier<Boolean> toggleGetter,
             @Nullable Supplier<String> sliderTextGetter,
             @Nullable DoubleSupplier sliderProgressGetter) {
+    }
+
+    private record TabRenderBox(int x, int y, int width, int height, @NonNull Button button, @NonNull String label,
+            int index) {
+    }
+
+    private record SearchRenderBox(int x, int y, int width, int height, int iconLaneWidth) {
     }
 
     private static final class DynamicSlider extends AbstractSliderButton {

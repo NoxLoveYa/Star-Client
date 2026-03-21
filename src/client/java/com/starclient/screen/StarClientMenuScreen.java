@@ -13,8 +13,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class StarClientMenuScreen extends DynamicOptionPanelScreen {
-    private final ShootingStarsRenderer shootingStarsRenderer = new ShootingStarsRenderer();
-
     public StarClientMenuScreen(@Nullable Screen previousScreen) {
         super(previousScreen, Component.literal("StarClient"), buildTabs());
     }

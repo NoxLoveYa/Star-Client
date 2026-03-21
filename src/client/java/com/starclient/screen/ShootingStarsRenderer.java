@@ -35,7 +35,23 @@ public class ShootingStarsRenderer {
     }
 
     public void setSpawnDensity(float spawnDensity) {
-        this.spawnDensity = Math.max(0f, Math.min(200f, spawnDensity));
+        float previousDensity = this.spawnDensity;
+        float clampedDensity = Math.max(0f, Math.min(200f, spawnDensity));
+        this.spawnDensity = clampedDensity;
+
+        if (clampedDensity <= 0f) {
+            this.spawnTimer = 0f;
+            this.nextSpawnDelay = Float.MAX_VALUE;
+            return;
+        }
+
+        float progress = 0f;
+        if (previousDensity > 0f && Float.isFinite(nextSpawnDelay) && nextSpawnDelay > 0f) {
+            progress = Math.max(0f, Math.min(1f, spawnTimer / nextSpawnDelay));
+        }
+
+        this.nextSpawnDelay = randomSpawnDelay();
+        this.spawnTimer = this.nextSpawnDelay * progress;
     }
 
     public void setSizeRange(float minSize, float maxSize) {
