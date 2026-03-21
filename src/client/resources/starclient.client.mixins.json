@@ -10,11 +10,11 @@
     "EntityRendererAccessor",
     "EntityRenderStateMixin",
     "LivingEntityRenderStateMixin",
-    "NametagFeatureRendererMixin",
-    "NameTagHeadIconRendererMixin",
+    "NameTagBackgroundColorMixin",
+    "NameTagIconRendererMixin",
     "NameTagStorageAccessor",
     "NameTagVisibilityMixin",
-    "PlayerRenderStateCaptureMixin"
+    "AvatarRenderStateCaptureMixin"
   ],
   "injectors": {
     "defaultRequire": 1

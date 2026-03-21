@@ -8,17 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-import java.util.List;
-
 @Mixin(NameTagFeatureRenderer.Storage.class)
-public class NametagFeatureRendererMixin {
-    @ModifyArgs(
-            method = "add",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/SubmitNodeStorage$NameTagSubmit;<init>(Lorg/joml/Matrix4f;FFLnet/minecraft/network/chat/Component;IIID)V" // adjust to actual constructor target
-            )
-    )
+public class NameTagBackgroundColorMixin {
+    @ModifyArgs(method = "add", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeStorage$NameTagSubmit;<init>(Lorg/joml/Matrix4f;FFLnet/minecraft/network/chat/Component;IIID)V"))
     private void modifyBackgroundColor(Args args) {
         Component component = args.get(3);
         int registered = StarNameTagColorRegistry.get(component);
@@ -27,4 +19,3 @@ public class NametagFeatureRendererMixin {
         }
     }
 }
-

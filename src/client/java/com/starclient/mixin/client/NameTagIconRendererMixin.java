@@ -25,12 +25,12 @@ import java.util.IdentityHashMap;
 import java.util.Set;
 
 @Mixin(NameTagFeatureRenderer.class)
-public class NameTagHeadIconRendererMixin {
+public class NameTagIconRendererMixin {
     @Unique
     private static final int STAR$FULL_BRIGHT_LIGHT = 0x00F000F0;
 
     @Inject(method = "render", at = @At("HEAD"))
-    private void renderHeadIcons(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource,
+    private void renderIcons(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource,
             Font font, CallbackInfo ci) {
         NameTagFeatureRenderer.Storage storage = submitNodeCollection.getNameTagSubmits();
 
@@ -38,16 +38,16 @@ public class NameTagHeadIconRendererMixin {
         Set<SubmitNodeStorage.NameTagSubmit> renderedSubmits = Collections.newSetFromMap(new IdentityHashMap<>());
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsSeethrough()) {
             if (renderedSubmits.add(submit)) {
-                renderHead(submit, bufferSource, font, true);
+                renderIcon(submit, bufferSource, font, true);
             }
         }
         for (SubmitNodeStorage.NameTagSubmit submit : accessor.star$getNameTagSubmitsNormal()) {
             if (renderedSubmits.add(submit)) {
-                renderHead(submit, bufferSource, font, false);
+                renderIcon(submit, bufferSource, font, false);
             }
         }
 
-        bufferSource.endBatch(); // flush before text renders
+        bufferSource.endBatch();
         StarNameTagColorRegistry.clearAll();
     }
 
@@ -74,11 +74,11 @@ public class NameTagHeadIconRendererMixin {
     }
 
     @Unique
-    private void renderHead(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource,
+    private void renderIcon(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource,
             Font font, boolean seeThrough) {
         float healthRatio = StarNameTagColorRegistry.getHealthRatio(submit.text());
         int size = font.lineHeight;
-        int headSize = size - 1;
+        int iconSize = size - 1;
 
         if (healthRatio >= 0f) {
             renderHealthBar(submit, bufferSource, font, seeThrough, healthRatio);
@@ -89,8 +89,8 @@ public class NameTagHeadIconRendererMixin {
             return;
         StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.getHeadUv(submit.text());
 
-        float x = submit.x() - headSize - 2.5f;
-        float y = submit.y(); // adjust this
+        float x = submit.x() - iconSize - 2.5f;
+        float y = submit.y();
         float bgZ = -0.01f;
 
         int bgColor = StarClientOptions.pendingNameTagBgColor;
@@ -100,11 +100,11 @@ public class NameTagHeadIconRendererMixin {
             VertexConsumer bgConsumer = bufferSource.getBuffer(bgRenderType);
             Matrix4f bgPose = submit.pose();
             bgConsumer.addVertex(bgPose, x - 1, y - 1, bgZ).setColor(bgColor).setLight(STAR$FULL_BRIGHT_LIGHT);
-            bgConsumer.addVertex(bgPose, x - 1, y + headSize + 1, bgZ).setColor(bgColor)
+            bgConsumer.addVertex(bgPose, x - 1, y + iconSize + 1, bgZ).setColor(bgColor)
                     .setLight(STAR$FULL_BRIGHT_LIGHT);
-            bgConsumer.addVertex(bgPose, x + headSize + 1, y + headSize + 1, bgZ).setColor(bgColor)
+            bgConsumer.addVertex(bgPose, x + iconSize + 1, y + iconSize + 1, bgZ).setColor(bgColor)
                     .setLight(STAR$FULL_BRIGHT_LIGHT);
-            bgConsumer.addVertex(bgPose, x + headSize + 1, y - 1, bgZ).setColor(bgColor)
+            bgConsumer.addVertex(bgPose, x + iconSize + 1, y - 1, bgZ).setColor(bgColor)
                     .setLight(STAR$FULL_BRIGHT_LIGHT);
             bufferSource.endBatch(bgRenderType);
         }
@@ -120,24 +120,24 @@ public class NameTagHeadIconRendererMixin {
 
         consumer.addVertex(pose, x, y, 0f).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setNormal(0, 0, 1)
                 .setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
-        consumer.addVertex(pose, x, y + headSize, 0f).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY)
+        consumer.addVertex(pose, x, y + iconSize, 0f).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
-        consumer.addVertex(pose, x + headSize, y + headSize, 0f).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY)
+        consumer.addVertex(pose, x + iconSize, y + iconSize, 0f).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
-        consumer.addVertex(pose, x + headSize, y, 0f).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY)
+        consumer.addVertex(pose, x + iconSize, y, 0f).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setNormal(0, 0, 1).setColor(-1).setLight(STAR$FULL_BRIGHT_LIGHT);
     }
 
     @Unique
     private void renderHealthBar(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource,
             Font font, boolean seeThrough, float healthRatio) {
-        int headSize = font.lineHeight - 1;
+        int iconSize = font.lineHeight - 1;
         float textLeft = submit.x();
         float textWidth = font.width(submit.text());
-        float barLeft = textLeft - headSize - 3.5f;
+        float barLeft = textLeft - iconSize - 3.5f;
         float barRight = textLeft + textWidth;
 
-        float barTop = submit.y() + headSize + 0.9f;
+        float barTop = submit.y() + iconSize + 0.9f;
         float barBottom = barTop + 1.25f;
         float fillZ = -0.0095f;
 

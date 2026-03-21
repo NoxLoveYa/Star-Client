@@ -10,12 +10,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AvatarRenderer.class)
-public abstract class PlayerRenderStateCaptureMixin {
+public abstract class AvatarRenderStateCaptureMixin {
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
-    private void capturePlayerState(Avatar player, AvatarRenderState playerRenderState, float f, CallbackInfo ci) {
-        EntityRenderStateDuck duck = (EntityRenderStateDuck) playerRenderState;
-        duck.star$setEntity(player);
-        duck.star$setNametag(player);
+    private void captureAvatarState(Avatar avatar, AvatarRenderState avatarRenderState, float tickDelta,
+            CallbackInfo ci) {
+        EntityRenderStateDuck duck = (EntityRenderStateDuck) avatarRenderState;
+        duck.star$setEntity(avatar);
+        duck.star$setNametag(avatar);
     }
 }
