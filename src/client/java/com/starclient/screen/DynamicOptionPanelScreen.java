@@ -2,6 +2,7 @@ package com.starclient.screen;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -30,6 +31,12 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private static final int GROUP_COLOR = new Color(14, 14, 20, 228).getRGB();
     private static final int TITLE_COLOR = new Color(240, 238, 255, 255).getRGB();
     private static final int SUBTITLE_COLOR = new Color(178, 151, 230, 255).getRGB();
+    private static final int CONTROL_BG_COLOR = new Color(20, 20, 28, 230).getRGB();
+    private static final int CONTROL_BG_HOVER_COLOR = new Color(28, 28, 38, 238).getRGB();
+    private static final int CONTROL_BORDER_COLOR = new Color(66, 52, 92, 255).getRGB();
+    private static final int CONTROL_ACCENT_COLOR = new Color(128, 88, 210, 255).getRGB();
+    private static final int CONTROL_TEXT_COLOR = new Color(232, 228, 246, 255).getRGB();
+    private static final int CONTROL_VALUE_COLOR = new Color(164, 142, 214, 255).getRGB();
 
     private static final int PANEL_WIDTH = 560;
     private static final int PANEL_HEIGHT = 360;
@@ -52,6 +59,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private double dragOffsetY = 0.0;
 
     private final List<SectionRenderBox> sectionRenderBoxes = new ArrayList<>();
+    private final List<ControlRenderBox> controlRenderBoxes = new ArrayList<>();
 
     protected DynamicOptionPanelScreen(@Nullable Screen previousScreen, Component title,
             List<@NonNull MenuTab> tabs) {
@@ -153,6 +161,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     private void rebuildMenuWidgets() {
         this.clearWidgets();
         this.sectionRenderBoxes.clear();
+        this.controlRenderBoxes.clear();
 
         int panelX = getPanelX();
         int panelY = getPanelY();
@@ -276,12 +285,24 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             }).bounds(x, y, width, CONTROL_HEIGHT).build();
             toggleButton.setMessage(
                     Objects.requireNonNull(buildToggleMessage(toggleOption.label(), toggleOption.getter().get())));
+            toggleButton.setAlpha(0.0f);
             this.addRenderableWidget(toggleButton);
+            this.controlRenderBoxes.add(new ControlRenderBox(
+                    ControlVisualType.TOGGLE,
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    toggleButton,
+                    toggleOption.label(),
+                    toggleOption.getter(),
+                    null,
+                    null));
             return;
         }
 
         if (control instanceof SliderOption sliderOption) {
-            this.addRenderableWidget(new DynamicSlider(
+            DynamicSlider sliderWidget = new DynamicSlider(
                     x,
                     y,
                     width,
@@ -291,7 +312,29 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     sliderOption.max(),
                     sliderOption.getter(),
                     sliderOption.setter(),
-                    sliderOption.formatter()));
+                    sliderOption.formatter());
+            this.addRenderableWidget(sliderWidget);
+            sliderWidget.setAlpha(0.0f);
+            this.controlRenderBoxes.add(new ControlRenderBox(
+                    ControlVisualType.SLIDER,
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    sliderWidget,
+                    sliderOption.label(),
+                    null,
+                    () -> sliderOption.formatter().apply(sliderOption.getter().getAsDouble()),
+                    () -> {
+                        double min = sliderOption.min();
+                        double max = sliderOption.max();
+                        double span = max - min;
+                        if (span <= 0.0) {
+                            return 0.0;
+                        }
+                        double current = sliderOption.getter().getAsDouble();
+                        return Math.max(0.0, Math.min(1.0, (current - min) / span));
+                    }));
             return;
         }
 
@@ -301,7 +344,19 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                         actionOption.action().run();
                         rebuildMenuWidgets();
                     }).bounds(x, y, width, CONTROL_HEIGHT).build();
+            actionButton.setAlpha(0.0f);
             this.addRenderableWidget(actionButton);
+            this.controlRenderBoxes.add(new ControlRenderBox(
+                    ControlVisualType.ACTION,
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    actionButton,
+                    actionOption.label(),
+                    null,
+                    null,
+                    null));
         }
     }
 
@@ -373,6 +428,91 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         }
 
         super.render(context, mouseX, mouseY, delta);
+        drawCustomControlWidgets(context, mouseX, mouseY);
+    }
+
+    private void drawCustomControlWidgets(GuiGraphics context, int mouseX, int mouseY) {
+        for (ControlRenderBox box : controlRenderBoxes) {
+            boolean hovered = box.widget().isHoveredOrFocused();
+            int background = hovered ? CONTROL_BG_HOVER_COLOR : CONTROL_BG_COLOR;
+
+            int x = box.x();
+            int y = box.y();
+            int width = box.width();
+            int height = box.height();
+
+            context.fill(x, y, x + width, y + height, background);
+            context.fill(x, y, x + width, y + 1, CONTROL_BORDER_COLOR);
+            context.fill(x, y + height - 1, x + width, y + height, CONTROL_BORDER_COLOR);
+            context.fill(x, y, x + 1, y + height, CONTROL_BORDER_COLOR);
+            context.fill(x + width - 1, y, x + width, y + height, CONTROL_BORDER_COLOR);
+
+            switch (box.type()) {
+                case TOGGLE -> drawToggleControl(context, box);
+                case ACTION -> drawActionControl(context, box);
+                case SLIDER -> drawSliderControl(context, box);
+            }
+        }
+    }
+
+    private void drawToggleControl(GuiGraphics context, ControlRenderBox box) {
+        int x = box.x();
+        int y = box.y();
+        int width = box.width();
+        int height = box.height();
+
+        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 6,
+                CONTROL_TEXT_COLOR, false);
+
+        int toggleSize = 10;
+        int toggleX = x + width - toggleSize - 6;
+        int toggleY = y + (height - toggleSize) / 2;
+        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + toggleSize, GROUP_COLOR);
+        context.fill(toggleX, toggleY, toggleX + toggleSize, toggleY + 1, CONTROL_BORDER_COLOR);
+        context.fill(toggleX, toggleY + toggleSize - 1, toggleX + toggleSize, toggleY + toggleSize,
+                CONTROL_BORDER_COLOR);
+        context.fill(toggleX, toggleY, toggleX + 1, toggleY + toggleSize, CONTROL_BORDER_COLOR);
+        context.fill(toggleX + toggleSize - 1, toggleY, toggleX + toggleSize, toggleY + toggleSize,
+                CONTROL_BORDER_COLOR);
+
+        boolean enabled = box.toggleGetter() != null && box.toggleGetter().get();
+        if (enabled) {
+            context.fill(toggleX + 2, toggleY + 2, toggleX + toggleSize - 2, toggleY + toggleSize - 2,
+                    CONTROL_ACCENT_COLOR);
+        }
+    }
+
+    private void drawActionControl(GuiGraphics context, ControlRenderBox box) {
+        int x = box.x();
+        int y = box.y();
+        int width = box.width();
+
+        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 6,
+                CONTROL_TEXT_COLOR, false);
+        context.drawString(this.font, Component.literal("+"), x + width - 10, y + 6, CONTROL_VALUE_COLOR, false);
+    }
+
+    private void drawSliderControl(GuiGraphics context, ControlRenderBox box) {
+        int x = box.x();
+        int y = box.y();
+        int width = box.width();
+
+        context.drawString(this.font, Component.literal(Objects.requireNonNull(box.label())), x + 6, y + 3,
+                CONTROL_TEXT_COLOR, false);
+
+        String valueText = box.sliderTextGetter() == null ? "" : box.sliderTextGetter().get();
+        int valueTextWidth = this.font.width(valueText);
+        context.drawString(this.font, Component.literal(valueText), x + width - valueTextWidth - 6, y + 3,
+                CONTROL_VALUE_COLOR, false);
+
+        int trackX = x + 6;
+        int trackY = y + 14;
+        int trackWidth = width - 12;
+        context.fill(trackX, trackY, trackX + trackWidth, trackY + 2, CONTROL_BORDER_COLOR);
+
+        double progress = box.sliderProgressGetter() == null ? 0.0 : box.sliderProgressGetter().getAsDouble();
+        int fillWidth = (int) Math.round(trackWidth * Math.max(0.0, Math.min(1.0, progress)));
+        context.fill(trackX, trackY, trackX + fillWidth, trackY + 2, CONTROL_ACCENT_COLOR);
     }
 
     private void drawGroupBox(GuiGraphics context, int x, int y, int width, int height, String title) {
@@ -409,6 +549,25 @@ public abstract class DynamicOptionPanelScreen extends Screen {
     }
 
     private record SectionRenderBox(int x, int y, int width, int height, String title) {
+    }
+
+    private enum ControlVisualType {
+        TOGGLE,
+        ACTION,
+        SLIDER
+    }
+
+    private record ControlRenderBox(
+            ControlVisualType type,
+            int x,
+            int y,
+            int width,
+            int height,
+            AbstractWidget widget,
+            String label,
+            @Nullable Supplier<Boolean> toggleGetter,
+            @Nullable Supplier<String> sliderTextGetter,
+            @Nullable DoubleSupplier sliderProgressGetter) {
     }
 
     private static final class DynamicSlider extends AbstractSliderButton {

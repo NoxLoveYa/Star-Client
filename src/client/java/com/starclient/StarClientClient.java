@@ -17,7 +17,9 @@ public class StarClientClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (OPEN_MENU_KEY.consumeClick()) {
-				if (!(client.screen instanceof StarClientMenuScreen)) {
+				if (client.screen instanceof StarClientMenuScreen menuScreen) {
+					menuScreen.onClose();
+				} else {
 					client.setScreen(new StarClientMenuScreen(client.screen));
 				}
 			}
