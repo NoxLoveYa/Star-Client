@@ -251,6 +251,10 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         return new ColorPickerOption(label, getter, setter);
     }
 
+    protected static @NonNull SeparatorOption separator(@NonNull String label) {
+        return new SeparatorOption(label);
+    }
+
     @SafeVarargs
     protected static <T> List<@NonNull T> listOf(@NonNull T... values) {
         List<@NonNull T> result = new ArrayList<>(values.length);
@@ -596,6 +600,28 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                     null,
                     colorOption.getter(),
                     sectionKey));
+            return;
+        }
+
+        if (control instanceof SeparatorOption separatorOption) {
+            Button separatorWidget = Button.builder(Component.empty(), button -> {
+            }).bounds(x, y, width, CONTROL_HEIGHT).build();
+            separatorWidget.active = false;
+            separatorWidget.setAlpha(0.0f);
+            this.addRenderableWidget(separatorWidget);
+            this.controlRenderBoxes.add(new ControlRenderBox(
+                    ControlVisualType.SEPARATOR,
+                    x,
+                    y,
+                    width,
+                    CONTROL_HEIGHT,
+                    separatorWidget,
+                    separatorOption.label(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    sectionKey));
         }
     }
 
@@ -906,6 +932,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             int width = floatingBox.width();
             int height = floatingBox.height();
 
+            if (floatingBox.type() == ControlVisualType.SEPARATOR) {
+                drawSeparatorControl(context, floatingBox);
+                continue;
+            }
+
             context.fill(x, y, x + width, y + height, background);
             int borderColor = getControlBorderColor();
             context.fill(x, y, x + width, y + 1, borderColor);
@@ -918,6 +949,7 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 case ACTION -> drawActionControl(context, floatingBox);
                 case SLIDER -> drawSliderControl(context, floatingBox);
                 case HUE_PICKER -> drawHuePickerControl(context, floatingBox);
+                case SEPARATOR -> drawSeparatorControl(context, floatingBox);
             }
         }
     }
@@ -1075,6 +1107,11 @@ public abstract class DynamicOptionPanelScreen extends Screen {
             int width = box.width();
             int height = box.height();
 
+            if (box.type() == ControlVisualType.SEPARATOR) {
+                drawSeparatorControl(context, box);
+                continue;
+            }
+
             context.fill(x, y, x + width, y + height, background);
             int borderColor = getControlBorderColor();
             context.fill(x, y, x + width, y + 1, borderColor);
@@ -1087,8 +1124,21 @@ public abstract class DynamicOptionPanelScreen extends Screen {
                 case ACTION -> drawActionControl(context, box);
                 case SLIDER -> drawSliderControl(context, box);
                 case HUE_PICKER -> drawHuePickerControl(context, box);
+                case SEPARATOR -> drawSeparatorControl(context, box);
             }
         }
+    }
+
+    private void drawSeparatorControl(@NonNull GuiGraphics context, ControlRenderBox box) {
+        DynamicOptionPanelRenderHelper.drawSeparatorControl(
+                context,
+                this.font,
+                box.label(),
+                box.x(),
+                box.y(),
+                box.width(),
+                getSubtitleColor(),
+                getPanelInnerBorderColor());
     }
 
     private void drawHuePickerControl(@NonNull GuiGraphics context, ControlRenderBox box) {
@@ -1198,7 +1248,8 @@ public abstract class DynamicOptionPanelScreen extends Screen {
         TOGGLE,
         ACTION,
         SLIDER,
-        HUE_PICKER
+        HUE_PICKER,
+        SEPARATOR
     }
 
     private record ControlRenderBox(

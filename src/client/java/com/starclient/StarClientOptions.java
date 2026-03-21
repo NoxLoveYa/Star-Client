@@ -15,6 +15,23 @@ public class StarClientOptions {
 
     public static int pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
 
+    public static boolean chamsPlayer = true;
+    public static boolean chamsHostile = true;
+    public static boolean chamsMob = true;
+    public static boolean chamsItem = true;
+
+    public static double chamsDistancePlayer = 32 * 64;
+    public static double chamsDistanceHostile = 32 * 64;
+    public static double chamsDistanceMob = 32 * 64;
+    public static double chamsDistanceItem = 32 * 64;
+
+    public static float chamsHuePlayer = 0.58f;
+    public static float chamsHueHostile = 0.00f;
+    public static float chamsHueMob = 0.32f;
+    public static float chamsHueItem = 0.14f;
+
+    public static float mobChamsAlpha = 0.35f;
+
     public static float shootingStarSpawnDensity = 10.0f;
     public static float shootingStarMinSize = 0.75f;
     public static float shootingStarMaxSize = 2.75f;

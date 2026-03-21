@@ -1,6 +1,7 @@
 package com.starclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.starclient.render.MobChamsRenderer;
 import com.starclient.screen.StarClientMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -17,6 +18,8 @@ public class StarClientClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		MobChamsRenderer.getInstance().initialize();
+
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			boolean isDown = OPEN_MENU_KEY.isDown()
 					|| org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().handle(),

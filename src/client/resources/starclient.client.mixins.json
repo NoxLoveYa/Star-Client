@@ -14,7 +14,8 @@
     "NameTagIconRendererMixin",
     "NameTagStorageAccessor",
     "NameTagVisibilityMixin",
-    "AvatarRenderStateCaptureMixin"
+    "AvatarRenderStateCaptureMixin",
+    "GameRendererCloseMixin"
   ],
   "injectors": {
     "defaultRequire": 1

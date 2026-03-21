@@ -21,28 +21,64 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
     }
 
     private static List<@NonNull MenuTab> buildTabs() {
-        MenuSection playerVisibility = new MenuSection("player visibility", "player", 0, listOf(
+        MenuSection playerNametag = new MenuSection("player nametag", "player", 0, listOf(
                 toggle("players", () -> StarClientOptions.forcedTagPlayer,
-                        value -> StarClientOptions.forcedTagPlayer = value),
-                slider("distance", 16.0, 256.0,
+                        value -> StarClientOptions.forcedTagPlayer = value)));
+
+        MenuSection playerChams = new MenuSection("player chams", "player", 1, listOf(
+                toggle("enabled", () -> StarClientOptions.chamsPlayer,
+                        value -> StarClientOptions.chamsPlayer = value),
+                colorPicker("hue", () -> StarClientOptions.chamsHuePlayer,
+                        value -> StarClientOptions.chamsHuePlayer = (float) Math.max(0.0, Math.min(1.0, value)))));
+
+        MenuSection playerDistance = new MenuSection("player distance", "player", 0, listOf(
+                slider("nametag distance", 16.0, 256.0,
                         () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistancePlayer)),
                         value -> StarClientOptions.forceTagDistancePlayer = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value))),
+                slider("chams distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.chamsDistancePlayer)),
+                        value -> StarClientOptions.chamsDistancePlayer = value * value,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
-        MenuSection hostileVisibility = new MenuSection("hostile visibility", "hostiles", 0, listOf(
+        MenuSection hostileNametag = new MenuSection("hostile nametag", "hostiles", 0, listOf(
                 toggle("hostiles", () -> StarClientOptions.forceTagHostile,
-                        value -> StarClientOptions.forceTagHostile = value),
-                slider("distance", 16.0, 256.0,
+                        value -> StarClientOptions.forceTagHostile = value)));
+
+        MenuSection hostileChams = new MenuSection("hostile chams", "hostiles", 1, listOf(
+                toggle("enabled", () -> StarClientOptions.chamsHostile,
+                        value -> StarClientOptions.chamsHostile = value),
+                colorPicker("hue", () -> StarClientOptions.chamsHueHostile,
+                        value -> StarClientOptions.chamsHueHostile = (float) Math.max(0.0, Math.min(1.0, value)))));
+
+        MenuSection hostileDistance = new MenuSection("hostile distance", "hostiles", 0, listOf(
+                slider("nametag distance", 16.0, 256.0,
                         () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceHostile)),
                         value -> StarClientOptions.forceTagDistanceHostile = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value))),
+                slider("chams distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.chamsDistanceHostile)),
+                        value -> StarClientOptions.chamsDistanceHostile = value * value,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
-        MenuSection mobVisibility = new MenuSection("mob visibility", "mobs", 0, listOf(
+        MenuSection mobNametag = new MenuSection("mob nametag", "mobs", 0, listOf(
                 toggle("mobs", () -> StarClientOptions.forceTagMob,
-                        value -> StarClientOptions.forceTagMob = value),
-                slider("distance", 16.0, 256.0,
+                        value -> StarClientOptions.forceTagMob = value)));
+
+        MenuSection mobChams = new MenuSection("mob chams", "mobs", 1, listOf(
+                toggle("enabled", () -> StarClientOptions.chamsMob,
+                        value -> StarClientOptions.chamsMob = value),
+                colorPicker("hue", () -> StarClientOptions.chamsHueMob,
+                        value -> StarClientOptions.chamsHueMob = (float) Math.max(0.0, Math.min(1.0, value)))));
+
+        MenuSection mobDistance = new MenuSection("mob distance", "mobs", 0, listOf(
+                slider("nametag distance", 16.0, 256.0,
                         () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceMob)),
                         value -> StarClientOptions.forceTagDistanceMob = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value))),
+                slider("chams distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.chamsDistanceMob)),
+                        value -> StarClientOptions.chamsDistanceMob = value * value,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
         MenuSection sharedNameTag = new MenuSection("shared nametag", "shared", 0, listOf(
@@ -51,12 +87,30 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                         StarClientMenuScreen::setNameTagBackgroundAlpha,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f", value)))));
 
-        MenuSection itemVisibility = new MenuSection("item visibility", "items", 0, listOf(
+        MenuSection sharedChams = new MenuSection("shared chams", "shared", 1, listOf(
+                slider("chams alpha", 0.05, 1.0,
+                        () -> StarClientOptions.mobChamsAlpha,
+                        value -> StarClientOptions.mobChamsAlpha = (float) value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.2f", value)))));
+
+        MenuSection itemNametag = new MenuSection("item nametag", "items", 0, listOf(
                 toggle("items", () -> StarClientOptions.forceTagItem,
-                        value -> StarClientOptions.forceTagItem = value),
-                slider("distance", 16.0, 256.0,
+                        value -> StarClientOptions.forceTagItem = value)));
+
+        MenuSection itemChams = new MenuSection("item chams", "items", 1, listOf(
+                toggle("enabled", () -> StarClientOptions.chamsItem,
+                        value -> StarClientOptions.chamsItem = value),
+                colorPicker("hue", () -> StarClientOptions.chamsHueItem,
+                        value -> StarClientOptions.chamsHueItem = (float) Math.max(0.0, Math.min(1.0, value)))));
+
+        MenuSection itemDistance = new MenuSection("item distance", "items", 0, listOf(
+                slider("nametag distance", 16.0, 256.0,
                         () -> Math.sqrt(Math.max(0.0, StarClientOptions.forceTagDistanceItem)),
                         value -> StarClientOptions.forceTagDistanceItem = value * value,
+                        value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value))),
+                slider("chams distance", 16.0, 256.0,
+                        () -> Math.sqrt(Math.max(0.0, StarClientOptions.chamsDistanceItem)),
+                        value -> StarClientOptions.chamsDistanceItem = value * value,
                         value -> Objects.requireNonNull(String.format(Locale.ROOT, "%.0f blocks", value)))));
 
         MenuSection stars = new MenuSection("shooting stars", "stars", 0, listOf(
@@ -124,10 +178,38 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                     StarClientOptions.forceTagDistanceMob = 32 * 64;
                     StarClientOptions.forceTagDistanceItem = 32 * 64;
                     StarClientOptions.pendingNameTagBgColor = new Color(25, 25, 25, 165).getRGB();
+                    StarClientOptions.chamsPlayer = true;
+                    StarClientOptions.chamsHostile = true;
+                    StarClientOptions.chamsMob = true;
+                    StarClientOptions.chamsItem = true;
+                    StarClientOptions.chamsDistancePlayer = 32 * 64;
+                    StarClientOptions.chamsDistanceHostile = 32 * 64;
+                    StarClientOptions.chamsDistanceMob = 32 * 64;
+                    StarClientOptions.chamsDistanceItem = 32 * 64;
+                    StarClientOptions.chamsHuePlayer = 0.58f;
+                    StarClientOptions.chamsHueHostile = 0.00f;
+                    StarClientOptions.chamsHueMob = 0.32f;
+                    StarClientOptions.chamsHueItem = 0.14f;
+                    StarClientOptions.mobChamsAlpha = 0.35f;
                 })));
 
         MenuTab visuals = new MenuTab("visuals",
-                listOf(playerVisibility, hostileVisibility, mobVisibility, itemVisibility, sharedNameTag, stars,
+                listOf(
+                        playerNametag,
+                        playerChams,
+                        playerDistance,
+                        hostileNametag,
+                        hostileChams,
+                        hostileDistance,
+                        mobNametag,
+                        mobChams,
+                        mobDistance,
+                        itemNametag,
+                        itemChams,
+                        itemDistance,
+                        sharedNameTag,
+                        sharedChams,
+                        stars,
                         colorRange));
         MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme));
 

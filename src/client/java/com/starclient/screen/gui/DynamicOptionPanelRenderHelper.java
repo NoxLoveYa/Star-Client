@@ -136,4 +136,18 @@ final class DynamicOptionPanelRenderHelper {
         context.fill(swatchX, swatchY, swatchX + 1, swatchY + 10, controlBorderColor);
         context.fill(swatchX + 9, swatchY, swatchX + 10, swatchY + 10, controlBorderColor);
     }
+
+    static void drawSeparatorControl(@NonNull GuiGraphics context, @NonNull Font font, @NonNull String label, int x,
+            int y, int width, int subtitleColor, int borderColor) {
+        int labelWidth = font.width(label);
+        int textX = x + 6;
+        int centerY = y + 10;
+        context.drawString(font, Component.literal(label), textX, y + 4, subtitleColor, false);
+
+        int lineStart = textX + labelWidth + 8;
+        int lineEnd = x + width - 6;
+        if (lineEnd > lineStart) {
+            context.fill(lineStart, centerY, lineEnd, centerY + 1, borderColor);
+        }
+    }
 }
