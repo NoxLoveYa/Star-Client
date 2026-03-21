@@ -60,7 +60,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
                 ? (livingEntity.getHealth() / livingEntity.getMaxHealth())
                 : -1f;
 
-        Component nameTag = buildNameTag(livingEntity, entityRenderState.nameTag);
+        Component nameTag = buildNameTag(entity, entityRenderState.nameTag);
         if (texture != null && uvRect != null) {
             StarNameTagColorRegistry.register(nameTag, StarClientOptions.pendingNameTagBgColor, texture, uvRect,
                     healthRatio);
@@ -480,7 +480,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         }
 
         if (type == EntityType.SPIDER || type == EntityType.CAVE_SPIDER) {
-            return StarNameTagColorRegistry.UvRect.pixels(64f, 32f, 32f, 4f, 40f, 12f);
+            return StarNameTagColorRegistry.UvRect.pixels(64f, 32f, 40f, 12f, 48f, 20f);
         }
         if (type == EntityType.SILVERFISH) {
             return StarNameTagColorRegistry.UvRect.pixels(64f, 32f, 0f, 0f, 6f, 6f);
@@ -514,9 +514,20 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
     }
 
     @Unique
-    private Component buildNameTag(LivingEntity living, Component original) {
+    private Component buildNameTag(Entity entity, Component original) {
+        if (entity instanceof ItemEntity itemEntity) {
+            int count = itemEntity.getItem().getCount();
+            if (count > 1) {
+                return Component.empty()
+                        .append(Component.literal(count + "x ").withStyle(ChatFormatting.GOLD))
+                        .append(original);
+            }
+            return original;
+        }
+
+        LivingEntity living = entity instanceof LivingEntity le ? le : null;
         if (living == null)
-            return original; // no need to reconstruct, just reuse
+            return original;
 
         String healthStr = String.format("%.1f❤ ", living.getHealth());
         ChatFormatting healthColor = getHealthColor(living);
