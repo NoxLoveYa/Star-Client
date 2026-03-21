@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "EntityRendererMixin",
+    "AvatarRendererNameTagMixin",
     "EntityRenderStateCaptureMixin",
     "EntityRendererAccessor",
     "EntityRenderStateMixin",
@@ -12,7 +13,8 @@
     "NametagFeatureRendererMixin",
     "NameTagHeadIconRendererMixin",
     "NameTagStorageAccessor",
-    "NameTagVisibilityMixin"
+    "NameTagVisibilityMixin",
+    "PlayerRenderStateCaptureMixin"
   ],
   "injectors": {
     "defaultRequire": 1

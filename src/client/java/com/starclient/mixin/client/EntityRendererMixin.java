@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,12 +26,15 @@ import java.awt.*;
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
     @Inject(method = "submitNameTag", at = @At("HEAD"), cancellable = true)
-    private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
-        if (entityRenderState.nameTag == null) return;
+    private void modifyNameTag(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
+            CameraRenderState cameraRenderState, CallbackInfo ci) {
+        if (entityRenderState.nameTag == null)
+            return;
 
         EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
 
-        if (!duck.star$isNametag()) return;
+        if (!duck.star$isNametag())
+            return;
 
         Entity entity = duck.star$getEntity();
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
@@ -52,8 +56,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
                 !entityRenderState.isDiscrete,
                 entityRenderState.lightCoords,
                 entityRenderState.distanceToCameraSq,
-                cameraRenderState
-        );
+                cameraRenderState);
         ci.cancel();
     }
 
@@ -301,7 +304,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
     @Unique
     private StarNameTagColorRegistry.UvRect resolveUv(Entity entity, Identifier texture) {
-        if (entity instanceof AbstractClientPlayer) {
+        if (entity instanceof AbstractClientPlayer || entity instanceof Avatar) {
             return StarNameTagColorRegistry.UvRect.playerFace();
         }
 
@@ -320,12 +323,15 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
         EntityType<?> type = entity.getType();
 
-        if (type == EntityType.ZOMBIE || type == EntityType.HUSK || type == EntityType.DROWNED || type == EntityType.ZOMBIE_VILLAGER
-                || type == EntityType.PLAYER || type == EntityType.PIGLIN || type == EntityType.PIGLIN_BRUTE || type == EntityType.ZOMBIFIED_PIGLIN) {
+        if (type == EntityType.ZOMBIE || type == EntityType.HUSK || type == EntityType.DROWNED
+                || type == EntityType.ZOMBIE_VILLAGER
+                || type == EntityType.PLAYER || type == EntityType.PIGLIN || type == EntityType.PIGLIN_BRUTE
+                || type == EntityType.ZOMBIFIED_PIGLIN) {
             return StarNameTagColorRegistry.UvRect.pixels(64f, 64f, 8f, 8f, 16f, 16f);
         }
 
-        if (type == EntityType.SKELETON || type == EntityType.STRAY || type == EntityType.WITHER_SKELETON || type == EntityType.CREEPER || type == EntityType.ENDERMAN) {
+        if (type == EntityType.SKELETON || type == EntityType.STRAY || type == EntityType.WITHER_SKELETON
+                || type == EntityType.CREEPER || type == EntityType.ENDERMAN) {
             return StarNameTagColorRegistry.UvRect.pixels(64f, 32f, 8f, 8f, 16f, 16f);
         }
 
@@ -393,7 +399,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             return StarNameTagColorRegistry.UvRect.pixels(32f, 32f, 0f, 0f, 8f, 8f);
         }
 
-        if (type == EntityType.COD || type == EntityType.SALMON || type == EntityType.TROPICAL_FISH || type == EntityType.PUFFERFISH) {
+        if (type == EntityType.COD || type == EntityType.SALMON || type == EntityType.TROPICAL_FISH
+                || type == EntityType.PUFFERFISH) {
             return StarNameTagColorRegistry.UvRect.pixels(32f, 32f, 0f, 0f, 8f, 8f);
         }
         if (type == EntityType.SQUID || type == EntityType.GLOW_SQUID) {
@@ -444,7 +451,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             return StarNameTagColorRegistry.UvRect.pixels(64f, 32f, 0f, 0f, 8f, 8f);
         }
 
-        if (type == EntityType.BOGGED || type == EntityType.BREEZE || type == EntityType.EVOKER || type == EntityType.ILLUSIONER
+        if (type == EntityType.BOGGED || type == EntityType.BREEZE || type == EntityType.EVOKER
+                || type == EntityType.ILLUSIONER
                 || type == EntityType.PILLAGER || type == EntityType.VINDICATOR || type == EntityType.WITCH) {
             return StarNameTagColorRegistry.UvRect.pixels(64f, 64f, 8f, 8f, 16f, 16f);
         }
@@ -466,7 +474,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
     @Unique
     private Component buildNameTag(LivingEntity living, Component original) {
-        if (living == null) return original; // no need to reconstruct, just reuse
+        if (living == null)
+            return original; // no need to reconstruct, just reuse
 
         String healthStr = String.format("%.1f❤ ", living.getHealth());
         ChatFormatting healthColor = getHealthColor(living);
@@ -479,8 +488,10 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
     @Unique
     private ChatFormatting getHealthColor(LivingEntity living) {
         float ratio = living.getHealth() / living.getMaxHealth();
-        if (ratio > 0.5f) return ChatFormatting.GREEN;
-        if (ratio > 0.25f) return ChatFormatting.YELLOW;
+        if (ratio > 0.5f)
+            return ChatFormatting.GREEN;
+        if (ratio > 0.25f)
+            return ChatFormatting.YELLOW;
         return ChatFormatting.RED;
     }
 }
