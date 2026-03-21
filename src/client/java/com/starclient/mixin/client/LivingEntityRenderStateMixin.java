@@ -27,12 +27,14 @@ public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S ext
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void captureTexture(T entity, S entityRenderState, float f, CallbackInfo ci) {
+        EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
+
         Identifier texture;
         if (entity instanceof AbstractClientPlayer player) {
             texture = player.getSkin().body().texturePath();
         } else {
             texture = this.getTextureLocation(entityRenderState);
         }
-        ((EntityRenderStateDuck) entityRenderState).star$setTexture(texture);
+        duck.star$setTexture(texture);
     }
 }

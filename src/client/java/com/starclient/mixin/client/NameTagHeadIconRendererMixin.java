@@ -40,6 +40,7 @@ public class NameTagHeadIconRendererMixin {
     private void renderHead(SubmitNodeStorage.NameTagSubmit submit, MultiBufferSource.BufferSource bufferSource, Font font, boolean seeThrough) {
         Identifier texture = StarNameTagColorRegistry.getHeadTexture(submit.text());
         if (texture == null) return;
+        StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.getHeadUv(submit.text());
 
         int size = font.lineHeight;
         int headSize = size - 1;
@@ -59,11 +60,10 @@ public class NameTagHeadIconRendererMixin {
             bufferSource.endBatch(bgRenderType);
         }
 
-        // player skin face UV: pixels 8-16 on a 64x64 texture
-        float u0 = 8f / 64f, u1 = 16f / 64f;
-        float v0 = 8f / 64f, v1 = 16f / 64f;
+        float u0 = uvRect.u0(), u1 = uvRect.u1();
+        float v0 = uvRect.v0(), v1 = uvRect.v1();
 
-        RenderType renderType = seeThrough ? RenderTypes.entityCutoutNoCull(texture) : RenderTypes.textSeeThrough(texture);
+        RenderType renderType = seeThrough ? RenderTypes.textSeeThrough(texture) : RenderTypes.entityCutoutNoCull(texture);
 
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
         Matrix4f pose = submit.pose();
