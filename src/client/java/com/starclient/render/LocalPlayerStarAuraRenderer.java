@@ -50,7 +50,8 @@ public final class LocalPlayerStarAuraRenderer {
             Objects.requireNonNull(client.level).addParticle(ParticleTypes.GLOW, x, y, z, vx, vy, vz);
 
             if (RANDOM.nextFloat() < 0.35f) {
-                Objects.requireNonNull(client.level).addParticle(ParticleTypes.CHERRY_LEAVES, x, y, z, vx * 0.4, vy * 0.3, vz * 0.4);
+                Objects.requireNonNull(client.level).addParticle(ParticleTypes.CHERRY_LEAVES, x, y, z, vx * 0.4,
+                        vy * 0.3, vz * 0.4);
             }
         }
     }

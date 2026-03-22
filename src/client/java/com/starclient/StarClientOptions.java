@@ -3,6 +3,7 @@ package com.starclient;
 import java.awt.*;
 
 public class StarClientOptions {
+    public static boolean showWatermark = true;
     private static final float DEFAULT_RAINBOW_CYCLES_PER_SECOND = 0.22f;
 
     public static boolean forceTagMob = true;

@@ -28,14 +28,17 @@ public class StarClientClient implements ClientModInitializer {
 		MobChamsRenderer.getInstance().initialize();
 		HudRenderCallback.EVENT.register((context, tickCounter) -> {
 			Minecraft client = Minecraft.getInstance();
-			if (client.screen == null) {
+			if (client.screen == null && StarClientOptions.showWatermark) {
 				StarClientWatermarkRenderer.render(context);
 			}
 		});
 		ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			ScreenEvents.afterRender(screen)
-					.register((currentScreen, context, mouseX, mouseY, tickDelta) -> StarClientWatermarkRenderer
-							.render(context));
+					.register((currentScreen, context, mouseX, mouseY, tickDelta) -> {
+						if (StarClientOptions.showWatermark) {
+							StarClientWatermarkRenderer.render(context);
+						}
+					});
 
 			ScreenMouseEvents.allowMouseClick(screen).register((currentScreen, event) -> {
 				if (event.button() == 0 && StarClientWatermarkRenderer.beginDragging(event.x(), event.y())) {
