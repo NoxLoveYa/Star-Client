@@ -57,6 +57,7 @@ public class StarClientOptions {
     public static float menuThemeHue = 0.75f;
     public static boolean menuThemeHueRainbow = false;
     public static float menuThemeHueRainbowSpeed = DEFAULT_RAINBOW_CYCLES_PER_SECOND;
+    public static boolean localPlayerStarAura = false;
     public static boolean waterWalk = false;
 
     public static void tickRainbowHues(double elapsedSeconds) {

@@ -54,6 +54,10 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                                 value -> Objects.requireNonNull(
                                                                 String.format(Locale.ROOT, "%.0f blocks", value)))));
 
+                MenuSection playerEffects = new MenuSection("player effects", "player", 0, listOf(
+                                toggle("star aura", () -> StarClientOptions.localPlayerStarAura,
+                                                value -> StarClientOptions.localPlayerStarAura = value)));
+
                 MenuSection hostileNametag = new MenuSection("hostile nametag", "hostiles", 0, listOf(
                                 toggle("hostiles", () -> StarClientOptions.forceTagHostile,
                                                 value -> StarClientOptions.forceTagHostile = value)));
@@ -273,6 +277,7 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                         StarClientOptions.shootingStarHueMinRainbowSpeed = 0.22f;
                                         StarClientOptions.shootingStarHueMaxRainbowSpeed = 0.22f;
                                         StarClientOptions.menuThemeHueRainbowSpeed = 0.22f;
+                                        StarClientOptions.localPlayerStarAura = false;
                                         StarClientOptions.waterWalk = false;
                                 })));
 
@@ -281,6 +286,7 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                                                 playerNametag,
                                                 playerChams,
                                                 playerDistance,
+                                                playerEffects,
                                                 hostileNametag,
                                                 hostileChams,
                                                 hostileDistance,

@@ -1,6 +1,7 @@
 package com.starclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.starclient.render.LocalPlayerStarAuraRenderer;
 import com.starclient.render.MobChamsRenderer;
 import com.starclient.render.StarClientWatermarkRenderer;
 import com.starclient.screen.StarClientMenuScreen;
@@ -64,6 +65,8 @@ public class StarClientClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			LocalPlayerStarAuraRenderer.tick(client);
+
 			long now = System.nanoTime();
 			if (lastRainbowTickNanos != 0L) {
 				double elapsedSeconds = (now - lastRainbowTickNanos) / 1_000_000_000.0;
