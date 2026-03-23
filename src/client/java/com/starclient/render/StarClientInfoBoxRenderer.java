@@ -2,10 +2,9 @@ package com.starclient.render;
 
 import com.starclient.StarClientOptions;
 import com.starclient.helper.GetTargetedObject;
-import com.starclient.StarNameTagColorRegistry;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -14,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
+
 import java.awt.Color;
 import java.util.Objects;
 
@@ -25,7 +25,7 @@ public final class StarClientInfoBoxRenderer {
 
     // Center coordinates for the info box
     private static int x = 120; // Center X
-    private static int y = 80; // Center Y
+    private static int y = 80; // Top Y
 
     // Returns the layout (width/height) for the current info box, for hit detection
     // and clamping
@@ -65,7 +65,7 @@ public final class StarClientInfoBoxRenderer {
         int width = layout.width();
         int height = layout.height();
         int left = x - width / 2;
-        int top = y - height / 2;
+        int top = y;
         if (!(mouseX >= left && mouseX <= left + width && mouseY >= top && mouseY <= top + height)) {
             return false;
         }
@@ -75,10 +75,8 @@ public final class StarClientInfoBoxRenderer {
         return true;
     }
 
-    private static final int PANEL_COLOR = new Color(10, 10, 12, 232).getRGB();
     private static final int HEADER_COLOR = new Color(16, 16, 22, 245).getRGB();
     private static final int TITLE_COLOR = new Color(240, 238, 255, 255).getRGB();
-    private static final int TEXT_COLOR = new Color(232, 228, 246, 255).getRGB();
     private static boolean dragging = false;
     private static int dragOffsetX = 0;
     private static int dragOffsetY = 0;
@@ -98,40 +96,62 @@ public final class StarClientInfoBoxRenderer {
         if (targeted == null)
             return;
 
-        String title = "Info Box";
-        String infoLine = "";
-        Identifier texture = null;
-        StarNameTagColorRegistry.UvRect uvRect = null;
-        ItemStack itemStack = null;
-
-        if (targeted instanceof LivingEntity livingEntity) {
-            title = livingEntity.getName().getString();
-            infoLine = livingEntity.getType().toShortString();
-            // texture = EntityTextureHelper.resolveTexture(livingEntity, );
-        } else if (targeted instanceof BlockHitResult blockHit) {
-            BlockState state = Objects.requireNonNull(client.level).getBlockState(blockHit.getBlockPos());
-            Block block = state.getBlock();
-            title = block.getName().getString();
-            infoLine = block.toString();
-            // Optionally: try to get block texture/icon here if desired
-        }
-
-        int height = 36;
         int padding = 6;
         int gap = 4;
         int iconSize = 16;
-        int titleWidth = font.width(title);
-        int infoWidth = font.width(infoLine);
-        int contentWidth = iconSize + gap + Math.max(titleWidth, infoWidth);
-        int width = padding * 2 + contentWidth;
-
         int panelBorderColor = getPanelBorderColor();
         int panelInnerBorderColor = getPanelInnerBorderColor();
 
+        // --- Dynamic width/height calculation ---
+        int width, height, effectCount = 0;
+        int baseLines = 3; // name, hearts, type
+        int lineHeight = font.lineHeight + 1;
+        int minHeight = 36;
+        String name = null, heartsStr = null, typeStr = null;
+        if (targeted instanceof LivingEntity livingEntity) {
+            name = livingEntity.getName().getString();
+            float health = livingEntity.getHealth();
+            float maxHealth = livingEntity.getMaxHealth();
+            int hearts = (int) Math.ceil(health / 2.0f);
+            int maxHearts = (int) Math.ceil(maxHealth / 2.0f);
+            StringBuilder heartsBuilder = new StringBuilder();
+            for (int i = 0; i < hearts; i++)
+                heartsBuilder.append("\u2764");
+            for (int i = hearts; i < maxHearts; i++)
+                heartsBuilder.append("\u2661");
+            heartsStr = heartsBuilder.toString();
+            typeStr = livingEntity.getType().toShortString();
+            int nameWidth = font.width(name);
+            int heartsWidth = font.width(heartsStr);
+            int typeWidth = font.width(typeStr);
+            effectCount = livingEntity.getActiveEffects().size();
+            int contentWidth = Math.max(Math.max(nameWidth, heartsWidth), typeWidth);
+            width = padding * 2 + contentWidth;
+            height = padding * 2 + (baseLines + effectCount) * lineHeight;
+            height = Math.max(height, minHeight);
+        } else if (targeted instanceof BlockHitResult blockHit) {
+            BlockState state = Objects.requireNonNull(client.level).getBlockState(blockHit.getBlockPos());
+            Block block = state.getBlock();
+            String title = block.getName().getString();
+            String namespace = "minecraft";
+            try {
+                namespace = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).getNamespace();
+            } catch (Exception ignored) {
+            }
+            int nameWidth = font.width(title);
+            int namespaceWidth = font.width(namespace);
+            int contentWidth = iconSize + gap + Math.max(nameWidth, namespaceWidth);
+            width = padding * 2 + contentWidth;
+            height = padding * 2 + 2 * lineHeight;
+            height = Math.max(height, minHeight);
+        } else {
+            width = 160;
+            height = minHeight;
+        }
+
         int left = x - width / 2;
-        int top = y - height / 2;
-        context.fill(left, top, left + width, top + height, PANEL_COLOR);
-        context.fill(left, top, left + width, top + (height / 2), HEADER_COLOR);
+        int top = y;
+        context.fill(left, top, left + width, top + height, HEADER_COLOR);
         context.fill(left, top, left + width, top + 1, panelBorderColor);
         context.fill(left, top + height - 1, left + width, top + height, panelBorderColor);
         context.fill(left, top, left + 1, top + height, panelBorderColor);
@@ -139,28 +159,75 @@ public final class StarClientInfoBoxRenderer {
         context.fill(left + 1, top + 2, left + width - 1, top + 3, panelInnerBorderColor);
 
         int drawX = left + padding;
-        int iconY = top + (height - iconSize) / 2;
+        int textY = top + padding;
 
+        if (targeted instanceof LivingEntity livingEntity) {
+            // 1. Name
+            context.drawString(font, Component.literal(name), drawX, textY, TITLE_COLOR, false);
 
-        // if (texture != null && uvRect != null) {
-        //     // context.blit(texture, drawX, iconY, uvRect.u0(), uvRect.v0(), iconSize, iconSize);
-        // } else if (itemStack != null) {
-        //     context.renderFakeItem(itemStack, drawX, iconY);
-        // } else {
-        // }
+            // 2. Health (hearts) - draw right below name, compact
+            int heartsY = textY + font.lineHeight + 2;
+            context.drawString(font, Component.literal(heartsStr), drawX, heartsY, Color.RED.getRGB(), false);
 
-        drawX += iconSize + gap;
-        int textY = top + 10;
-        context.drawString(font, Component.literal(title), drawX, textY, TITLE_COLOR, false);
-        context.drawString(font, Component.literal(infoLine), drawX, textY + 12, TEXT_COLOR, false);
+            // 3. Active Effects
+            int effectY = heartsY + font.lineHeight + 2;
+            for (var effect : livingEntity.getActiveEffects()) {
+                var mobEffect = effect.getEffect();
+                String effectName = mobEffect.value().getDisplayName().getString();
+                int amplifier = effect.getAmplifier();
+                int duration = effect.getDuration() / 20; // seconds
+                String durationStr = String.format("%02d:%02d", duration / 60, duration % 60);
+                int color = mobEffect.value().getCategory().getTooltipFormatting().getColor();
+                String ampStr = amplifier > 0 ? " " + (amplifier + 1) : "";
+                String effectText = effectName + ampStr + " (" + durationStr + ")";
+                context.drawString(font, Component.literal(effectText), drawX, effectY, color, false);
+                effectY += font.lineHeight + 2;
+            }
+
+            // 4. Source (e.g., "Minecraft")
+            context.drawString(font, Component.literal(typeStr), drawX, top + height - font.lineHeight - 4,
+                    Color.BLUE.getRGB(), false);
+        } else if (targeted instanceof BlockHitResult blockHit) {
+            BlockState state = Objects.requireNonNull(client.level).getBlockState(blockHit.getBlockPos());
+            Block block = state.getBlock();
+            // Block texture as ItemStack
+            ItemStack stack = new ItemStack(block);
+            int iconY = textY - 2;
+            context.renderItem(stack, drawX, iconY);
+
+            // Block name (large, white)
+            String title = block.getName().getString();
+            int nameX = drawX + iconSize + gap;
+            context.drawString(font, Component.literal(title), nameX, textY, TITLE_COLOR, false);
+
+            // Mod/source (namespace, blue, italic)
+            String namespace = "minecraft";
+            try {
+                // Try to get the namespace (modid) for the block
+                namespace = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).getNamespace();
+            } catch (Exception ignored) {
+            }
+            context.drawString(font, Component.literal(namespace).withStyle(style -> style.withItalic(true)), nameX,
+                    textY + 16, Color.BLUE.getRGB(), false);
+        }
     }
 
     public static void dragTo(double mouseX, double mouseY) {
         if (!dragging)
             return;
-        x = (int) Math.round(mouseX) - dragOffsetX;
+        Minecraft client = Minecraft.getInstance();
+        int windowWidth = client.getWindow().getGuiScaledWidth();
+        int centerX = windowWidth / 2;
+        int threshold = 16; // Snap threshold in pixels
+        int newX = (int) Math.round(mouseX) - dragOffsetX;
+        // Snap to center if close enough
+        if (Math.abs(newX - centerX) <= threshold) {
+            x = centerX;
+        } else {
+            x = newX;
+        }
         y = (int) Math.round(mouseY) - dragOffsetY;
-        clampToWindow(Minecraft.getInstance());
+        clampToWindow(client);
     }
 
     public static void endDragging() {
@@ -175,10 +242,12 @@ public final class StarClientInfoBoxRenderer {
         InfoBoxLayout layout = layout(client);
         int width = layout.width();
         int height = layout.height();
+        int windowWidth = client.getWindow().getGuiScaledWidth();
+        int windowHeight = client.getWindow().getGuiScaledHeight();
         int minX = width / 2;
-        int minY = height / 2;
-        int maxX = client.getWindow().getGuiScaledWidth() - width / 2;
-        int maxY = client.getWindow().getGuiScaledHeight() - height / 2;
+        int maxX = windowWidth - width / 2;
+        int minY = 0;
+        int maxY = windowHeight - height;
         x = Math.max(minX, Math.min(maxX, x));
         y = Math.max(minY, Math.min(maxY, y));
     }
