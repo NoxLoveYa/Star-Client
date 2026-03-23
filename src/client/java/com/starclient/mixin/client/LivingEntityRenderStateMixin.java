@@ -1,6 +1,5 @@
 package com.starclient.mixin.client;
 
-import com.starclient.EntityRenderStateDuck;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -26,13 +25,11 @@ public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S ext
     @Shadow
     protected abstract Identifier getTextureLocation(S renderState);
 
-    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void captureTexture(T entity, S entityRenderState, float f, CallbackInfo ci) {
-        if (entityRenderState == null) {
+        if (entityRenderState == null || entity == null) {
             return;
         }
-
-        EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
 
         Identifier texture;
         if (entity instanceof AbstractClientPlayer player) {
@@ -40,6 +37,8 @@ public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S ext
         } else {
             texture = this.getTextureLocation(entityRenderState);
         }
-        duck.star$setTexture(texture);
+        // Set texture on the entity's duck
+        com.starclient.EntityDuck entityDuck = (com.starclient.EntityDuck) entity;
+        entityDuck.star$setTexture(texture);
     }
 }

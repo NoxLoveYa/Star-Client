@@ -4,244 +4,38 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.item.ItemDisplayContext;
 import com.starclient.StarNameTagColorRegistry;
-import com.starclient.EntityRenderStateDuck;
+
+import java.util.Objects;
 
 public class EntityTextureHelper {
-    public static Identifier resolveTexture(Entity entity, EntityRenderStateDuck duck) {
-        if (entity instanceof net.minecraft.client.player.AbstractClientPlayer player) {
-            return player.getSkin().body().texturePath();
-        }
-        EntityType<?> type = entity.getType();
-        String className = entity.getClass().getName().toLowerCase();
-        if (type == EntityType.MOOSHROOM || className.contains("mooshroom")) {
-            return Identifier.withDefaultNamespace("textures/entity/cow/red_mooshroom.png");
-        }
-        if (type == EntityType.COW || className.contains("cow")) {
-            return Identifier.withDefaultNamespace("textures/entity/cow/temperate_cow.png");
-        }
-        if (type == EntityType.CHICKEN || className.contains("chicken")) {
-            return Identifier.withDefaultNamespace("textures/entity/chicken/temperate_chicken.png");
-        }
-        if (type == EntityType.PIG || (className.contains("pig") && !className.contains("piglin"))) {
-            return Identifier.withDefaultNamespace("textures/entity/pig/temperate_pig.png");
-        }
-        if (type == EntityType.ARMADILLO || className.contains("armadillo")) {
-            return Identifier.withDefaultNamespace("textures/entity/armadillo.png");
-        }
-        if (type == EntityType.SLIME || className.contains("slime")) {
-            return Identifier.withDefaultNamespace("textures/entity/slime/slime.png");
-        }
-        if (type == EntityType.MAGMA_CUBE || className.contains("magmacube") || className.contains("magma_cube")) {
-            return Identifier.withDefaultNamespace("textures/entity/slime/magmacube.png");
-        }
-        if (type == EntityType.WOLF || className.contains("wolf")) {
-            return Identifier.withDefaultNamespace("textures/entity/wolf/wolf.png");
-        }
-        if (type == EntityType.DONKEY || className.contains("donkey")) {
-            return Identifier.withDefaultNamespace("textures/entity/horse/donkey.png");
-        }
-        if (type == EntityType.MULE || className.contains("mule")) {
-            return Identifier.withDefaultNamespace("textures/entity/horse/mule.png");
-        }
-        if (type == EntityType.HORSE || className.contains("horse")) {
-            return Identifier.withDefaultNamespace("textures/entity/horse/horse_brown.png");
-        }
-        if (type == EntityType.LLAMA || type == EntityType.TRADER_LLAMA || className.contains("llama")) {
-            return Identifier.withDefaultNamespace("textures/entity/llama/creamy.png");
-        }
-        if (type == EntityType.CAMEL || className.contains("camel")) {
-            return Identifier.withDefaultNamespace("textures/entity/camel/camel.png");
-        }
-        if (type == EntityType.GOAT || className.contains("goat")) {
-            return Identifier.withDefaultNamespace("textures/entity/goat/goat.png");
-        }
-        if (type == EntityType.SHEEP || className.contains("sheep")) {
-            return Identifier.withDefaultNamespace("textures/entity/sheep/sheep.png");
-        }
-        if (type == EntityType.POLAR_BEAR || className.contains("polarbear")) {
-            return Identifier.withDefaultNamespace("textures/entity/bear/polarbear.png");
-        }
-        if (type == EntityType.PANDA || className.contains("panda")) {
-            return Identifier.withDefaultNamespace("textures/entity/panda/panda.png");
-        }
-        if (type == EntityType.FOX || className.contains("fox")) {
-            return Identifier.withDefaultNamespace("textures/entity/fox/fox.png");
-        }
-        if (type == EntityType.CAT || className.contains("cat")) {
-            return Identifier.withDefaultNamespace("textures/entity/cat/tabby.png");
-        }
-        if (type == EntityType.OCELOT || className.contains("ocelot")) {
-            return Identifier.withDefaultNamespace("textures/entity/cat/ocelot.png");
-        }
-        if (type == EntityType.RABBIT || className.contains("rabbit")) {
-            return Identifier.withDefaultNamespace("textures/entity/rabbit/brown.png");
-        }
-        if (type == EntityType.BEE || className.contains("bee")) {
-            return Identifier.withDefaultNamespace("textures/entity/bee/bee.png");
-        }
-        if (type == EntityType.TURTLE || className.contains("turtle")) {
-            return Identifier.withDefaultNamespace("textures/entity/turtle/big_sea_turtle.png");
-        }
-        if (type == EntityType.FROG || className.contains("frog")) {
-            return Identifier.withDefaultNamespace("textures/entity/frog/temperate_frog.png");
-        }
-        if (type == EntityType.STRIDER || className.contains("strider")) {
-            return Identifier.withDefaultNamespace("textures/entity/strider/strider.png");
-        }
-        if (type == EntityType.HOGLIN || className.contains("hoglin")) {
-            return Identifier.withDefaultNamespace("textures/entity/hoglin/hoglin.png");
-        }
-        if (type == EntityType.ZOGLIN || className.contains("zoglin")) {
-            return Identifier.withDefaultNamespace("textures/entity/hoglin/zoglin.png");
-        }
-        if (type == EntityType.SNIFFER || className.contains("sniffer")) {
-            return Identifier.withDefaultNamespace("textures/entity/sniffer/sniffer.png");
-        }
-        if (type == EntityType.BAT || className.contains("bat")) {
-            return Identifier.withDefaultNamespace("textures/entity/bat.png");
-        }
-        if (type == EntityType.PARROT || className.contains("parrot")) {
-            return Identifier.withDefaultNamespace("textures/entity/parrot/parrot_blue.png");
-        }
-        if (type == EntityType.ALLAY || className.contains("allay")) {
-            return Identifier.withDefaultNamespace("textures/entity/allay/allay.png");
-        }
-        if (type == EntityType.VEX || className.contains("vex")) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/vex.png");
-        }
-        if (type == EntityType.COD) {
-            return Identifier.withDefaultNamespace("textures/entity/fish/cod.png");
-        }
-        if (type == EntityType.SALMON) {
-            return Identifier.withDefaultNamespace("textures/entity/fish/salmon.png");
-        }
-        if (type == EntityType.TROPICAL_FISH) {
-            return Identifier.withDefaultNamespace("textures/entity/fish/tropical_a.png");
-        }
-        if (type == EntityType.PUFFERFISH) {
-            return Identifier.withDefaultNamespace("textures/entity/fish/pufferfish.png");
-        }
-        if (type == EntityType.SQUID) {
-            return Identifier.withDefaultNamespace("textures/entity/squid/squid.png");
-        }
-        if (type == EntityType.GLOW_SQUID) {
-            return Identifier.withDefaultNamespace("textures/entity/squid/glow_squid.png");
-        }
-        if (type == EntityType.AXOLOTL) {
-            return Identifier.withDefaultNamespace("textures/entity/axolotl/axolotl_wild.png");
-        }
-        if (type == EntityType.DOLPHIN) {
-            return Identifier.withDefaultNamespace("textures/entity/dolphin.png");
-        }
-        if (type == EntityType.BLAZE) {
-            return Identifier.withDefaultNamespace("textures/entity/blaze.png");
-        }
-        if (type == EntityType.GHAST) {
-            return Identifier.withDefaultNamespace("textures/entity/ghast/ghast.png");
-        }
-        if (type == EntityType.PHANTOM) {
-            return Identifier.withDefaultNamespace("textures/entity/phantom.png");
-        }
-        if (type == EntityType.SHULKER) {
-            return Identifier.withDefaultNamespace("textures/entity/shulker/shulker.png");
-        }
-        if (type == EntityType.GUARDIAN) {
-            return Identifier.withDefaultNamespace("textures/entity/guardian.png");
-        }
-        if (type == EntityType.ELDER_GUARDIAN) {
-            return Identifier.withDefaultNamespace("textures/entity/guardian_elder.png");
-        }
-        if (type == EntityType.WARDEN) {
-            return Identifier.withDefaultNamespace("textures/entity/warden/warden.png");
-        }
-        if (type == EntityType.RAVAGER) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/ravager.png");
-        }
-        if (type == EntityType.WITHER) {
-            return Identifier.withDefaultNamespace("textures/entity/wither/wither.png");
-        }
-        if (type == EntityType.ENDER_DRAGON) {
-            return Identifier.withDefaultNamespace("textures/entity/enderdragon/dragon.png");
-        }
-        if (type == EntityType.SPIDER) {
-            return Identifier.withDefaultNamespace("textures/entity/spider/spider.png");
-        }
-        if (type == EntityType.CAVE_SPIDER) {
-            return Identifier.withDefaultNamespace("textures/entity/spider/cave_spider.png");
-        }
-        if (type == EntityType.SILVERFISH) {
-            return Identifier.withDefaultNamespace("textures/entity/silverfish.png");
-        }
-        if (type == EntityType.ENDERMITE) {
-            return Identifier.withDefaultNamespace("textures/entity/endermite.png");
-        }
-        if (type == EntityType.EVOKER) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/evoker.png");
-        }
-        if (type == EntityType.ILLUSIONER) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/illusioner.png");
-        }
-        if (type == EntityType.PILLAGER) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/pillager.png");
-        }
-        if (type == EntityType.VINDICATOR) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/vindicator.png");
-        }
-        if (type == EntityType.VEX) {
-            return Identifier.withDefaultNamespace("textures/entity/illager/vex.png");
-        }
-        if (type == EntityType.VILLAGER) {
-            return Identifier.withDefaultNamespace("textures/entity/villager/villager.png");
-        }
-        if (type == EntityType.WANDERING_TRADER) {
-            return Identifier.withDefaultNamespace("textures/entity/wandering_trader.png");
-        }
-        if (type == EntityType.ZOMBIE) {
-            return Identifier.withDefaultNamespace("textures/entity/zombie/zombie.png");
-        }
-        if (type == EntityType.HUSK) {
-            return Identifier.withDefaultNamespace("textures/entity/zombie/husk.png");
-        }
-        if (type == EntityType.DROWNED) {
-            return Identifier.withDefaultNamespace("textures/entity/zombie/drowned.png");
-        }
-        if (type == EntityType.SKELETON) {
-            return Identifier.withDefaultNamespace("textures/entity/skeleton/skeleton.png");
-        }
-        if (type == EntityType.STRAY) {
-            return Identifier.withDefaultNamespace("textures/entity/skeleton/stray.png");
-        }
-        if (type == EntityType.WITHER_SKELETON) {
-            return Identifier.withDefaultNamespace("textures/entity/skeleton/wither_skeleton.png");
-        }
-        if (type == EntityType.BOGGED) {
-            return Identifier.withDefaultNamespace("textures/entity/skeleton/bogged.png");
-        }
-        if (type == EntityType.PIGLIN) {
-            return Identifier.withDefaultNamespace("textures/entity/piglin/piglin.png");
-        }
-        if (type == EntityType.PIGLIN_BRUTE) {
-            return Identifier.withDefaultNamespace("textures/entity/piglin/piglin_brute.png");
-        }
-        if (type == EntityType.ZOMBIFIED_PIGLIN) {
-            return Identifier.withDefaultNamespace("textures/entity/piglin/zombified_piglin.png");
-        }
-        if (type == EntityType.CREEPER) {
-            return Identifier.withDefaultNamespace("textures/entity/creeper/creeper.png");
-        }
-        if (type == EntityType.ENDERMAN) {
-            return Identifier.withDefaultNamespace("textures/entity/enderman/enderman.png");
-        }
-        Identifier captured = duck.star$getTexture();
+    public static Identifier resolveTexture(Entity entity) {
+        com.starclient.EntityDuck entityDuck = (com.starclient.EntityDuck) entity;
+        Identifier captured = entityDuck.star$getTexture();
         if (captured != null) {
             return captured;
         }
         return null;
+    }
+
+    public static PlayerSkin resolveLocalPlayerDisplaySkin(Minecraft client, LocalPlayer player) {
+        if (player != null) {
+            return Objects.requireNonNull(player.getSkin());
+        }
+
+        PlayerSkin lookedUp = client.getSkinManager().createLookup(client.getGameProfile(), false).get();
+        if (lookedUp != null) {
+            return lookedUp;
+        }
+
+        return Objects.requireNonNull(DefaultPlayerSkin.get(client.getGameProfile()));
     }
 
     public static ItemIcon resolveItemIcon(ItemEntity itemEntity) {

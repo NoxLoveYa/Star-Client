@@ -41,7 +41,7 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
         Entity entity = duck.star$getEntity();
         LivingEntity livingEntity = entity instanceof LivingEntity le ? le : null;
-        Identifier texture = EntityTextureHelper.resolveTexture(entity, duck);
+        Identifier texture = EntityTextureHelper.resolveTexture(entity);
         StarNameTagColorRegistry.UvRect uvRect = EntityTextureHelper.resolveUv(entity, texture);
         if (entity instanceof ItemEntity itemEntity) {
             EntityTextureHelper.ItemIcon itemIcon = EntityTextureHelper

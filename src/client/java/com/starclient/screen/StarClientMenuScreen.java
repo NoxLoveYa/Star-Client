@@ -302,7 +302,9 @@ public class StarClientMenuScreen extends DynamicOptionPanelScreen {
                 MenuTab movementTab = new MenuTab("movement", listOf(movement));
                 MenuSection miscToggles = new MenuSection("misc toggles", "misc", 0, listOf(
                                 toggle("show watermark", () -> StarClientOptions.showWatermark,
-                                                value -> StarClientOptions.showWatermark = value)));
+                                                value -> StarClientOptions.showWatermark = value),
+                                toggle("show info box", () -> StarClientOptions.showInfoBox,
+                                                value -> StarClientOptions.showInfoBox = value)));
                 MenuTab misc = new MenuTab("misc", listOf(presets, menuTheme, miscToggles));
 
                 return listOf(visuals, movementTab, misc);

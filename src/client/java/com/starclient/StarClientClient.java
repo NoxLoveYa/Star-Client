@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.starclient.render.LocalPlayerStarAuraRenderer;
 import com.starclient.render.MobChamsRenderer;
 import com.starclient.render.StarClientWatermarkRenderer;
+import com.starclient.render.StarClientInfoBoxRenderer;
 import com.starclient.screen.StarClientMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -28,8 +29,13 @@ public class StarClientClient implements ClientModInitializer {
 		MobChamsRenderer.getInstance().initialize();
 		HudRenderCallback.EVENT.register((context, tickCounter) -> {
 			Minecraft client = Minecraft.getInstance();
-			if (client.screen == null && StarClientOptions.showWatermark) {
-				StarClientWatermarkRenderer.render(context);
+			if (client.screen == null) {
+				if (StarClientOptions.showWatermark) {
+					StarClientWatermarkRenderer.render(context);
+				}
+				if (StarClientOptions.showInfoBox) {
+					StarClientInfoBoxRenderer.render(context);
+				}
 			}
 		});
 		ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -38,33 +44,63 @@ public class StarClientClient implements ClientModInitializer {
 						if (StarClientOptions.showWatermark) {
 							StarClientWatermarkRenderer.render(context);
 						}
+						if (StarClientOptions.showInfoBox) {
+							StarClientInfoBoxRenderer.render(context);
+						}
 					});
 
 			ScreenMouseEvents.allowMouseClick(screen).register((currentScreen, event) -> {
-				if (event.button() == 0 && StarClientWatermarkRenderer.beginDragging(event.x(), event.y())) {
-					return false;
+				if (event.button() == 0) {
+					boolean handled = false;
+					if (StarClientWatermarkRenderer.beginDragging(event.x(), event.y())) {
+						handled = true;
+					}
+					if (StarClientInfoBoxRenderer.beginDragging(event.x(), event.y())) {
+						handled = true;
+					}
+					if (handled)
+						return false;
 				}
 				return true;
 			});
 
 			ScreenMouseEvents.allowMouseDrag(screen)
 					.register((currentScreen, event, horizontalAmount, verticalAmount) -> {
-						if (event.button() == 0 && StarClientWatermarkRenderer.isDragging()) {
-							StarClientWatermarkRenderer.dragTo(event.x(), event.y());
-							return false;
+						if (event.button() == 0) {
+							boolean handled = false;
+							if (StarClientWatermarkRenderer.isDragging()) {
+								StarClientWatermarkRenderer.dragTo(event.x(), event.y());
+								handled = true;
+							}
+							if (StarClientInfoBoxRenderer.isDragging()) {
+								StarClientInfoBoxRenderer.dragTo(event.x(), event.y());
+								handled = true;
+							}
+							if (handled)
+								return false;
 						}
 						return true;
 					});
 
 			ScreenMouseEvents.allowMouseRelease(screen).register((currentScreen, event) -> {
-				if (event.button() == 0 && StarClientWatermarkRenderer.isDragging()) {
-					StarClientWatermarkRenderer.endDragging();
-					return false;
+				if (event.button() == 0) {
+					boolean handled = false;
+					if (StarClientWatermarkRenderer.isDragging()) {
+						StarClientWatermarkRenderer.endDragging();
+						handled = true;
+					}
+					if (StarClientInfoBoxRenderer.isDragging()) {
+						StarClientInfoBoxRenderer.endDragging();
+						handled = true;
+					}
+					if (handled)
+						return false;
 				}
 				return true;
 			});
 
 			ScreenEvents.remove(screen).register(removedScreen -> StarClientWatermarkRenderer.endDragging());
+			ScreenEvents.remove(screen).register(removedScreen -> StarClientInfoBoxRenderer.endDragging());
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {

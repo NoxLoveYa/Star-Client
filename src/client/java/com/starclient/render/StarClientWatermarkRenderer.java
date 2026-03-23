@@ -5,9 +5,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.PlayerSkin;
+
+import com.starclient.helper.EntityTextureHelper;
 
 import java.awt.Color;
 import java.time.LocalTime;
@@ -82,7 +83,7 @@ public final class StarClientWatermarkRenderer {
         drawX += sepWidth;
 
         int faceY = y + (height - faceSize) / 2;
-        PlayerSkin displaySkin = Objects.requireNonNull(resolveDisplaySkin(client, player));
+        PlayerSkin displaySkin = Objects.requireNonNull(EntityTextureHelper.resolveLocalPlayerDisplaySkin(client, player));
         PlayerFaceRenderer.draw(context, displaySkin, drawX, faceY, faceSize);
 
         drawX += faceSize + gap;
@@ -173,19 +174,6 @@ public final class StarClientWatermarkRenderer {
 
     private static int getPanelInnerBorderColor() {
         return themeColor(0.50f, 0.33f, 220);
-    }
-
-    private static PlayerSkin resolveDisplaySkin(Minecraft client, LocalPlayer player) {
-        if (player != null) {
-            return Objects.requireNonNull(player.getSkin());
-        }
-
-        PlayerSkin lookedUp = client.getSkinManager().createLookup(client.getGameProfile(), false).get();
-        if (lookedUp != null) {
-            return lookedUp;
-        }
-
-        return Objects.requireNonNull(DefaultPlayerSkin.get(client.getGameProfile()));
     }
 
     private record WatermarkLayout(int width, int height) {

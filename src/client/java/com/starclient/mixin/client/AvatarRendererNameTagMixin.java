@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.starclient.EntityRenderStateDuck;
 import com.starclient.StarClientOptions;
 import com.starclient.StarNameTagColorRegistry;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
@@ -17,6 +16,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import com.starclient.helper.EntityTextureHelper;
 
 import java.util.Objects;
 
@@ -36,7 +36,7 @@ public abstract class AvatarRendererNameTagMixin {
             return;
 
         LivingEntity living = duck.star$getEntity() instanceof LivingEntity le ? le : null;
-        Identifier texture = resolvePlayerTexture(duck, living);
+        Identifier texture = EntityTextureHelper.resolveTexture(duck.star$getEntity());
         StarNameTagColorRegistry.UvRect uvRect = StarNameTagColorRegistry.UvRect.playerFace();
         float healthRatio = living != null && living.getMaxHealth() > 0f
                 ? (living.getHealth() / living.getMaxHealth())
@@ -61,14 +61,6 @@ public abstract class AvatarRendererNameTagMixin {
                 avatarRenderState.distanceToCameraSq,
                 Objects.requireNonNull(cameraRenderState));
         ci.cancel();
-    }
-
-    @Unique
-    private Identifier resolvePlayerTexture(EntityRenderStateDuck duck, LivingEntity living) {
-        if (living instanceof AbstractClientPlayer player) {
-            return player.getSkin().body().texturePath();
-        }
-        return duck.star$getTexture();
     }
 
     @Unique

@@ -4,6 +4,7 @@
   "package": "com.starclient.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "EntityMixin",
     "EntityRendererMixin",
     "AvatarRendererNameTagMixin",
     "EntityRenderStateCaptureMixin",
