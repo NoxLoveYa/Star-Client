@@ -16,6 +16,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class StarClientMenuScreen extends DynamicOptionPanelScreen {
+        @Override
+        public void render(net.minecraft.client.gui.GuiGraphics context, int mouseX, int mouseY, float delta) {
+                super.render(context, mouseX, mouseY, delta);
+                com.starclient.render.StarClientInfoBoxRenderer.render(context);
+        }
+
         public StarClientMenuScreen(@Nullable Screen previousScreen) {
                 super(previousScreen, Component.literal("StarClient"), buildTabs());
         }

@@ -7,20 +7,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
-
 import java.awt.Color;
 import java.util.Objects;
 
 public final class StarClientInfoBoxRenderer {
-    // Layout record for hit detection, now using center-based logic
+    // Layout record for hit detection (center-based logic)
     private record InfoBoxLayout(int width, int height) {
-
     }
 
     // Center coordinates for the info box
@@ -30,31 +27,41 @@ public final class StarClientInfoBoxRenderer {
     // Returns the layout (width/height) for the current info box, for hit detection
     // and clamping
     private static InfoBoxLayout layout(Minecraft client) {
+        final int minWidth = 160, minHeight = 36, padding = 6, gap = 4, iconSize = 16;
         var font = client.font;
-        // Get targeted object for title/info width
         Object targeted = GetTargetedObject.getTargetedObject(client, 0.0f);
-        String title = "Info Box";
-        String infoLine = "";
-        if (targeted instanceof Entity entity) {
-            title = entity.getName().getString();
-            infoLine = entity.getType().toShortString();
-            if (entity instanceof ItemEntity itemEntity) {
-                infoLine = itemEntity.getItem().getHoverName().getString() + " x" + itemEntity.getItem().getCount();
-            }
+        int width = minWidth, height = minHeight;
+        if (targeted instanceof LivingEntity livingEntity) {
+            String name = livingEntity.getName().getString();
+            float health = livingEntity.getHealth();
+            float maxHealth = livingEntity.getMaxHealth();
+            int hearts = (int) Math.ceil(health / 2.0f);
+            int maxHearts = (int) Math.ceil(maxHealth / 2.0f);
+            StringBuilder heartsBuilder = new StringBuilder();
+            for (int i = 0; i < hearts; i++)
+                heartsBuilder.append("\u2764");
+            for (int i = hearts; i < maxHearts; i++)
+                heartsBuilder.append("\u2661");
+            String heartsStr = heartsBuilder.toString();
+            String typeStr = livingEntity.getType().toShortString();
+            int contentWidth = Math.max(Math.max(font.width(name), font.width(heartsStr)), font.width(typeStr));
+            width = padding * 2 + contentWidth;
+            height = padding * 2 + (3 + livingEntity.getActiveEffects().size()) * (font.lineHeight + 1);
         } else if (targeted instanceof BlockHitResult blockHit) {
             BlockState state = Objects.requireNonNull(client.level).getBlockState(blockHit.getBlockPos());
             Block block = state.getBlock();
-            title = block.getName().getString();
-            infoLine = block.toString();
+            String title = block.getName().getString();
+            String namespace = "minecraft";
+            try {
+                namespace = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).getNamespace();
+            } catch (Exception ignored) {
+            }
+            int contentWidth = iconSize + gap + Math.max(font.width(title), font.width(namespace));
+            width = padding * 2 + contentWidth;
+            height = padding * 2 + 2 * (font.lineHeight + 1);
         }
-        int padding = 6;
-        int gap = 4;
-        int iconSize = 16;
-        int titleWidth = font.width(title);
-        int infoWidth = font.width(infoLine);
-        int contentWidth = iconSize + gap + Math.max(titleWidth, infoWidth);
-        int width = padding * 2 + contentWidth;
-        int height = 36;
+        width = Math.max(width, minWidth);
+        height = Math.max(height, minHeight);
         return new InfoBoxLayout(width, height);
     }
 
@@ -91,9 +98,11 @@ public final class StarClientInfoBoxRenderer {
         var font = client.font;
         clampToWindow(client);
 
-        // Get targeted object (returns Entity or BlockHitResult)
-        Object targeted = GetTargetedObject.getTargetedObject(client, 0.0f);
-        if (targeted == null)
+        // If menu is open, show dummy info for dragging/visualization
+        boolean showDummy = client.screen != null
+                && client.screen.getClass().getSimpleName().equals("StarClientMenuScreen");
+        Object targeted = showDummy ? null : GetTargetedObject.getTargetedObject(client, 0.0f);
+        if (!showDummy && targeted == null)
             return;
 
         int padding = 6;
@@ -103,12 +112,26 @@ public final class StarClientInfoBoxRenderer {
         int panelInnerBorderColor = getPanelInnerBorderColor();
 
         // --- Dynamic width/height calculation ---
-        int width, height, effectCount = 0;
-        int baseLines = 3; // name, hearts, type
+        int width, height;
+        int baseLines = 3;
         int lineHeight = font.lineHeight + 1;
         int minHeight = 36;
         String name = null, heartsStr = null, typeStr = null;
-        if (targeted instanceof LivingEntity livingEntity) {
+        if (showDummy) {
+            name = "Dummy Entity";
+            int hearts = 5, maxHearts = 10;
+            StringBuilder heartsBuilder = new StringBuilder();
+            for (int i = 0; i < hearts; i++)
+                heartsBuilder.append("\u2764");
+            for (int i = hearts; i < maxHearts; i++)
+                heartsBuilder.append("\u2661");
+            heartsStr = heartsBuilder.toString();
+            typeStr = "minecraft:zombie";
+            int contentWidth = Math.max(Math.max(font.width(name), font.width(heartsStr)), font.width(typeStr));
+            width = padding * 2 + contentWidth;
+            height = padding * 2 + baseLines * lineHeight;
+            height = Math.max(height, minHeight);
+        } else if (targeted instanceof LivingEntity livingEntity) {
             name = livingEntity.getName().getString();
             float health = livingEntity.getHealth();
             float maxHealth = livingEntity.getMaxHealth();
@@ -121,13 +144,9 @@ public final class StarClientInfoBoxRenderer {
                 heartsBuilder.append("\u2661");
             heartsStr = heartsBuilder.toString();
             typeStr = livingEntity.getType().toShortString();
-            int nameWidth = font.width(name);
-            int heartsWidth = font.width(heartsStr);
-            int typeWidth = font.width(typeStr);
-            effectCount = livingEntity.getActiveEffects().size();
-            int contentWidth = Math.max(Math.max(nameWidth, heartsWidth), typeWidth);
+            int contentWidth = Math.max(Math.max(font.width(name), font.width(heartsStr)), font.width(typeStr));
             width = padding * 2 + contentWidth;
-            height = padding * 2 + (baseLines + effectCount) * lineHeight;
+            height = padding * 2 + (baseLines + livingEntity.getActiveEffects().size()) * lineHeight;
             height = Math.max(height, minHeight);
         } else if (targeted instanceof BlockHitResult blockHit) {
             BlockState state = Objects.requireNonNull(client.level).getBlockState(blockHit.getBlockPos());
@@ -161,21 +180,22 @@ public final class StarClientInfoBoxRenderer {
         int drawX = left + padding;
         int textY = top + padding;
 
-        if (targeted instanceof LivingEntity livingEntity) {
-            // 1. Name
+        if (showDummy) {
             context.drawString(font, Component.literal(name), drawX, textY, TITLE_COLOR, false);
-
-            // 2. Health (hearts) - draw right below name, compact
             int heartsY = textY + font.lineHeight + 2;
             context.drawString(font, Component.literal(heartsStr), drawX, heartsY, Color.RED.getRGB(), false);
-
-            // 3. Active Effects
+            context.drawString(font, Component.literal(typeStr), drawX, top + height - font.lineHeight - 4,
+                    Color.BLUE.getRGB(), false);
+        } else if (targeted instanceof LivingEntity livingEntity) {
+            context.drawString(font, Component.literal(name), drawX, textY, TITLE_COLOR, false);
+            int heartsY = textY + font.lineHeight + 2;
+            context.drawString(font, Component.literal(heartsStr), drawX, heartsY, Color.RED.getRGB(), false);
             int effectY = heartsY + font.lineHeight + 2;
             for (var effect : livingEntity.getActiveEffects()) {
                 var mobEffect = effect.getEffect();
                 String effectName = mobEffect.value().getDisplayName().getString();
                 int amplifier = effect.getAmplifier();
-                int duration = effect.getDuration() / 20; // seconds
+                int duration = effect.getDuration() / 20;
                 String durationStr = String.format("%02d:%02d", duration / 60, duration % 60);
                 int color = mobEffect.value().getCategory().getTooltipFormatting().getColor();
                 String ampStr = amplifier > 0 ? " " + (amplifier + 1) : "";
@@ -183,8 +203,6 @@ public final class StarClientInfoBoxRenderer {
                 context.drawString(font, Component.literal(effectText), drawX, effectY, color, false);
                 effectY += font.lineHeight + 2;
             }
-
-            // 4. Source (e.g., "Minecraft")
             context.drawString(font, Component.literal(typeStr), drawX, top + height - font.lineHeight - 4,
                     Color.BLUE.getRGB(), false);
         } else if (targeted instanceof BlockHitResult blockHit) {
