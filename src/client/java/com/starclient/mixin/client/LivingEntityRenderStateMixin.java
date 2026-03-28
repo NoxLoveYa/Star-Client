@@ -1,12 +1,17 @@
 package com.starclient.mixin.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.starclient.EntityRenderStateDuck;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,9 +30,16 @@ public abstract class LivingEntityRenderStateMixin<T extends LivingEntity, S ext
     @Shadow
     protected abstract Identifier getTextureLocation(S renderState);
 
-    @Inject(method = "extractRenderState", at = @At("HEAD"))
-    private void captureTexture(T entity, S entityRenderState, float f, CallbackInfo ci) {
-        if (entityRenderState == null || entity == null) {
+    @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At("HEAD"))
+    private void captureTexture(S entityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
+            CameraRenderState cameraRenderState, CallbackInfo ci) {
+        if (entityRenderState == null) {
+            return;
+        }
+
+        EntityRenderStateDuck duck = (EntityRenderStateDuck) entityRenderState;
+        Entity entity = duck.star$getEntity();
+        if (entity == null) {
             return;
         }
 
