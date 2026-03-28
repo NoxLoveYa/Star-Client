@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class StarClientMenuScreen extends DynamicOptionPanelScreen {
         @Override
-        public void render(net.minecraft.client.gui.GuiGraphics context, int mouseX, int mouseY, float delta) {
+        public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float delta) {
                 super.render(context, mouseX, mouseY, delta);
                 com.starclient.render.StarClientInfoBoxRenderer.render(context);
         }
